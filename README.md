@@ -1,5 +1,3 @@
-# mental-training-app
+# Claude-Code-Arbeits-Repo
 
-Saubere Basis für einen Neustart. Noch kein Anwendungscode.
-
-- `.claude/skills/`: Projekt-Skills für Claude Code (siehe `.claude/skills/README.md`)
+Arbeits-Repo für Claude-Code-Projekte mit gemeinsamen Skills in `.claude/skills/`.

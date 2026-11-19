@@ -18,3 +18,12 @@ Skills `accessibility`, `react-performance`, `frontend-patterns`, `e2e-testing`,
 `rules/react/`, Agents `react-reviewer`, `react-build-resolver`, `tdd-guide`,
 Commands `/react-review`, `/react-build`, `/react-test`, `/plan` sowie das Skript
 `scripts/setup-package-manager.js` (tdd-workflow nutzt dann die beschriebene Fallback-Reihenfolge).
+
+## Skills aus mattpocock/skills
+
+Unverändert übernommen aus [mattpocock/skills](https://github.com/mattpocock/skills) (Commit `abeeaf9`), MIT-Lizenz, siehe `MATTPOCOCK-LICENSE`.
+
+| Skill | Zweck |
+|---|---|
+| grill-me | Nur manuell per `/grill-me` aufrufbar; startet `grilling` |
+| grilling | Plan oder Idee in Fragerunden durchlöchern, bis alles geklärt ist |
