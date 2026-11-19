@@ -60,3 +60,6 @@ export async function updateCustomExercise(id: string, input: ExerciseInput): Pr
 export async function archiveExercise(id: string): Promise<void> {
   await db.update(exercises).set({ archived: true, updatedAt: new Date() }).where(eq(exercises.id, id));
 }
+
+/** Alle Übungen inkl. archivierter – für Anzeige in Verlauf und Routinen. */
+export const allExercisesWithArchivedQuery = () => db.select().from(exercises);

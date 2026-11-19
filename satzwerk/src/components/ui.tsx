@@ -143,6 +143,7 @@ export function TextField({ label, style, ...rest }: TextInputProps & { label?: 
         </AppText>
       )}
       <TextInput
+        accessibilityLabel={rest.accessibilityLabel ?? label}
         placeholderTextColor={c.textMuted}
         style={[
           styles.input,

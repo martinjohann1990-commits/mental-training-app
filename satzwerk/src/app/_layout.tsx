@@ -9,6 +9,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppText } from '@/components/ui';
 import { initDatabase } from '@/db/client';
 import { seedDatabase } from '@/db/seed';
+import { initRestAlerts } from '@/lib/rest-alerts';
+import { useActiveWorkout } from '@/stores/active-workout';
 import { useSettings } from '@/stores/settings';
 import { palette } from '@/theme/colors';
 import { useColorMode } from '@/theme/use-theme';
@@ -29,6 +31,8 @@ function useDatabaseReady() {
       await migrate(database, migrations);
       await seedDatabase(database);
       await load();
+      await useActiveWorkout.getState().hydrate();
+      await initRestAlerts().catch(() => {});
     })()
       .then(() => !cancelled && setReady(true))
       .catch((e: unknown) => !cancelled && setError(e instanceof Error ? e : new Error(String(e))));
@@ -96,6 +100,10 @@ export default function RootLayout() {
           <Stack.Screen name="settings/index" options={{ title: 'Einstellungen' }} />
           <Stack.Screen name="settings/equipment/index" options={{ title: 'Mein Equipment' }} />
           <Stack.Screen name="settings/equipment/[id]" options={{ title: 'Equipment-Profil' }} />
+          <Stack.Screen name="routine/[id]" options={{ title: 'Routine' }} />
+          <Stack.Screen name="workout/active" options={{ title: 'Workout', gestureEnabled: false }} />
+          <Stack.Screen name="workout/finish" options={{ title: 'Workout abschließen', presentation: 'modal' }} />
+          <Stack.Screen name="workout/[id]" options={{ title: 'Workout' }} />
         </Stack>
       </ThemeProvider>
     </GestureHandlerRootView>
