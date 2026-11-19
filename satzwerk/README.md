@@ -20,6 +20,13 @@ Workout-Tracker für Android (Expo / React Native). Spezifikation: [`../SPEC.md`
 - Laufendes Workout übersteht das Schließen der App
 - Abschluss mit Gefühl/Energie/Notiz, Workout-Detail, „Wiederholen“ und „Als Routine speichern“
 
+## Stand: Phase 3 ✅
+- Neue Tabs **Verlauf** (Liste nach Monaten + Kalender) und **Statistik**
+- Statistik: Workouts, Trainingszeit, Volumen, Wochenserie; Volumen pro Woche (Säulen), Muskelgruppen-Verteilung, neueste Rekorde; Zeitraum 4/12/52 Wochen
+- Pro Übung: Fortschritts-Chart (1RM geschätzt, Max. Gewicht, Volumen, Wdh./Dauer/Distanz je nach Typ), Bestwerte, Verlaufstabelle
+- Rekord-Abzeichen 🏆 im Workout-Detail (ab der zweiten Einheit einer Übung)
+- Wochen- und Monatsrückblicke mit Vergleich zum Vorzeitraum, Ø Gefühl/Energie, Top-Übungen, Rekorden
+
 ## APK / Updates
 - APK-Builds über EAS (`eas.json`, Profil `preview`), Projekt: https://expo.dev/accounts/martinjo90/projects/satzwerk
 - Updates ohne Neuinstallation über EAS Update (Kanal `preview`), solange keine neuen nativen Module dazukommen

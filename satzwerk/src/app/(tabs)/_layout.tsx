@@ -26,10 +26,24 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="history"
+        options={{
+          title: 'Verlauf',
+          tabBarIcon: ({ color, size }) => <Icon name="history" color={color as string} size={size} />,
+        }}
+      />
+      <Tabs.Screen
         name="exercises"
         options={{
           title: 'Übungen',
           tabBarIcon: ({ color, size }) => <Icon name="format-list-bulleted" color={color as string} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="stats"
+        options={{
+          title: 'Statistik',
+          tabBarIcon: ({ color, size }) => <Icon name="chart-line" color={color as string} size={size} />,
         }}
       />
       <Tabs.Screen

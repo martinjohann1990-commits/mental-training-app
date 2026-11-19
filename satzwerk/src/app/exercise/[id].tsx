@@ -2,6 +2,7 @@ import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { Alert, Platform, ScrollView, View } from 'react-native';
 
+import { ExerciseProgress } from '@/components/exercise-progress';
 import { EQUIPMENT_ICONS } from '@/components/icons';
 import { AppText, Button, Card, Chip, ChipRow, EmptyState, ListRow, SectionHeader } from '@/components/ui';
 import { allExercisesQuery, archiveExercise } from '@/db/repo/exercises';
@@ -109,12 +110,7 @@ export default function ExerciseDetailScreen() {
         </View>
       ) : null}
 
-      <Card>
-        <AppText variant="label" muted>
-          Verlauf & Rekorde
-        </AppText>
-        <AppText muted>Sobald du Workouts loggst (Phase 2/3), erscheinen hier Verlauf, PRs und Charts.</AppText>
-      </Card>
+      <ExerciseProgress exerciseId={ex.id} loggingType={ex.loggingType} />
 
       {ex.isCustom && (
         <View style={{ gap: spacing.sm, marginTop: spacing.md }}>

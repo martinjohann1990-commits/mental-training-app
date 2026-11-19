@@ -38,3 +38,24 @@ export function parseDuration(input: string): number | null {
   if (!/^\d+(:\d{1,2}){0,2}$/.test(s)) return null;
   return s.split(':').reduce((acc, part) => acc * 60 + Number(part), 0);
 }
+
+/** Tausenderpunkte ohne Intl-Abhängigkeit: 12345.6 → "12.346". */
+export function formatNumber(n: number, decimals = 0): string {
+  const fixed = Math.abs(n).toFixed(decimals);
+  const [int, dec] = fixed.split('.');
+  const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return `${n < 0 ? '−' : ''}${grouped}${dec ? `,${dec}` : ''}`;
+}
+
+/** Volumen kompakt: < 10 t in kg, sonst in t. */
+export function formatVolume(kg: number, unit: Unit): string {
+  const v = toDisplayWeight(kg, unit);
+  if (unit === 'kg' && v >= 10000) return `${formatNumber(v / 1000, 1)} t`;
+  return `${formatNumber(v)} ${unit}`;
+}
+
+export function formatHours(totalSeconds: number): string {
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.round((totalSeconds % 3600) / 60);
+  return h > 0 ? `${h} h ${m} min` : `${m} min`;
+}

@@ -1,5 +1,5 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 
 import { formatSetValues } from '@/components/workout/exercise-card';
@@ -9,8 +9,11 @@ import { deleteWorkout, detailToDraftExercises, getWorkoutDetail, type WorkoutDe
 import { describeInterval } from '@/domain/interval';
 import { draftToRoutineExercises } from '@/domain/routine';
 import { formatDuration, formatWeight } from '@/domain/units';
+import { PR_LABELS, prsInWorkout } from '@/domain/stats';
 import { fieldsFor, SET_TYPES, setVolume } from '@/domain/workout';
 import { useExerciseMap } from '@/hooks/use-exercise-map';
+import { useHistory } from '@/hooks/use-history';
+import { formatPRValue } from '@/lib/format-pr';
 import { confirmAction, notify } from '@/lib/confirm';
 import { goBack } from '@/lib/navigation';
 import { formatDecimal } from '@/lib/number';
@@ -26,6 +29,8 @@ export default function WorkoutDetailScreen() {
   const map = useExerciseMap();
   const unit = useSettings((s) => s.unit);
   const [detail, setDetail] = useState<WorkoutDetail | null | undefined>(undefined);
+  const history = useHistory();
+  const prs = useMemo(() => (history ? prsInWorkout(history.sets, id) : []), [history, id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -61,6 +66,7 @@ export default function WorkoutDetailScreen() {
           ['Dauer', formatDuration(durationSec)],
           ['Sätze', String(setCount)],
           ['Volumen', formatWeight(volume, unit)],
+          ['Rekorde', String(new Set(prs.map((p) => p.exerciseId)).size)],
         ].map(([k, v]) => (
           <View key={k} style={{ alignItems: 'center' }}>
             <AppText variant="caption" muted>
@@ -98,6 +104,14 @@ export default function WorkoutDetailScreen() {
                 {describeInterval(e.interval)}
               </AppText>
             )}
+            {prs
+              .filter((p) => p.exerciseId === e.exerciseId)
+              .filter((p) => p.kind !== 'volume' || prs.filter((q) => q.exerciseId === e.exerciseId).length === 1)
+              .map((p) => (
+                <AppText key={p.kind} variant="caption" style={{ fontWeight: '700' }}>
+                  🏆 {PR_LABELS[p.kind]}: {formatPRValue(p.kind, p.value, unit)}
+                </AppText>
+              ))}
             {e.note ? (
               <AppText variant="caption" muted style={{ fontStyle: 'italic' }}>
                 {e.note}

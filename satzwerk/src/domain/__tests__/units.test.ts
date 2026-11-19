@@ -18,3 +18,14 @@ describe('Einheiten', () => {
     expect(parseDuration('1:x')).toBeNull();
   });
 });
+
+describe('Zahlenformat', () => {
+  const { formatNumber, formatVolume, formatHours } = jest.requireActual('@/domain/units');
+  it('Tausenderpunkte', () => {
+    expect(formatNumber(1234567)).toBe('1.234.567');
+    expect(formatNumber(12.345, 1)).toBe('12,3');
+    expect(formatVolume(8500, 'kg')).toBe('8.500 kg');
+    expect(formatVolume(12500, 'kg')).toBe('12,5 t');
+    expect(formatHours(5400)).toBe('1 h 30 min');
+  });
+});

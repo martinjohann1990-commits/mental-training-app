@@ -104,6 +104,7 @@ export default function RootLayout() {
           <Stack.Screen name="workout/active" options={{ title: 'Workout', gestureEnabled: false }} />
           <Stack.Screen name="workout/finish" options={{ title: 'Workout abschließen', presentation: 'modal' }} />
           <Stack.Screen name="workout/[id]" options={{ title: 'Workout' }} />
+          <Stack.Screen name="review" options={{ title: 'Rückblick' }} />
         </Stack>
       </ThemeProvider>
     </GestureHandlerRootView>
