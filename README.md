@@ -1,3 +1,5 @@
 # mental-training-app
 
-Neuer, leerer Start. Projekt-Skills für Claude Code liegen in `.claude/skills/`.
+Saubere Basis für einen Neustart. Noch kein Anwendungscode.
+
+- `.claude/skills/`: Projekt-Skills für Claude Code (siehe `.claude/skills/README.md`)
