@@ -2,6 +2,7 @@ import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { Alert, Platform, ScrollView, View } from 'react-native';
 
+import { ExerciseMedia } from '@/components/exercise-media';
 import { ExerciseProgress } from '@/components/exercise-progress';
 import { EQUIPMENT_ICONS } from '@/components/icons';
 import { AppText, Button, Card, Chip, ChipRow, EmptyState, ListRow, SectionHeader } from '@/components/ui';
@@ -109,6 +110,8 @@ export default function ExerciseDetailScreen() {
           </Card>
         </View>
       ) : null}
+
+      <ExerciseMedia exerciseId={ex.id} mediaUri={ex.mediaUri} />
 
       <ExerciseProgress exerciseId={ex.id} loggingType={ex.loggingType} />
 

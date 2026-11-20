@@ -9,7 +9,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppText } from '@/components/ui';
 import { initDatabase } from '@/db/client';
 import { seedDatabase } from '@/db/seed';
+import { AppLockOverlay } from '@/components/lock-gate';
 import { initRestAlerts } from '@/lib/rest-alerts';
+import { subscribeAutoLock } from '@/stores/app-lock';
 import { useActiveWorkout } from '@/stores/active-workout';
 import { useSettings } from '@/stores/settings';
 import { palette } from '@/theme/colors';
@@ -33,6 +35,7 @@ function useDatabaseReady() {
       await load();
       await useActiveWorkout.getState().hydrate();
       await initRestAlerts().catch(() => {});
+      subscribeAutoLock();
     })()
       .then(() => !cancelled && setReady(true))
       .catch((e: unknown) => !cancelled && setError(e instanceof Error ? e : new Error(String(e))));
@@ -105,7 +108,14 @@ export default function RootLayout() {
           <Stack.Screen name="workout/finish" options={{ title: 'Workout abschließen', presentation: 'modal' }} />
           <Stack.Screen name="workout/[id]" options={{ title: 'Workout' }} />
           <Stack.Screen name="review" options={{ title: 'Rückblick' }} />
+          <Stack.Screen name="body/index" options={{ title: 'Körper' }} />
+          <Stack.Screen name="body/measure" options={{ title: 'Messung', presentation: 'modal' }} />
+          <Stack.Screen name="body/metric/[key]" options={{ title: 'Maß' }} />
+          <Stack.Screen name="body/photos" options={{ title: 'Fototagebuch' }} />
+          <Stack.Screen name="body/photo/[id]" options={{ title: 'Foto' }} />
+          <Stack.Screen name="body/compare" options={{ title: 'Vorher / Nachher' }} />
         </Stack>
+        <AppLockOverlay />
       </ThemeProvider>
     </GestureHandlerRootView>
   );

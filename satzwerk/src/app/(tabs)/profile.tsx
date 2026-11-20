@@ -20,11 +20,11 @@ export default function ProfileScreen() {
       </Card>
       <SectionHeader>App</SectionHeader>
       <Card style={{ paddingVertical: spacing.xs }}>
-        <ListRow icon="cog-outline" title="Einstellungen" subtitle="Einheiten, Darstellung" onPress={() => router.push('/settings')} />
+        <ListRow icon="cog-outline" title="Einstellungen" subtitle="Einheiten, Darstellung, App-Sperre" onPress={() => router.push('/settings')} />
         <Divider />
         <ListRow icon="chart-line" title="Statistiken" subtitle="Rekorde, Volumen, Rückblicke" onPress={() => router.push('/stats')} />
         <Divider />
-        <ListRow icon="human" title="Körpermaße & Fototagebuch" subtitle="Kommt in Phase 4" />
+        <ListRow icon="human" title="Körpermaße & Fototagebuch" subtitle="Gewicht, Umfänge, Fortschrittsfotos" onPress={() => router.push('/body')} />
       </Card>
     </ScrollView>
   );

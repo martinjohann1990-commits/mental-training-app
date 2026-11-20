@@ -27,6 +27,13 @@ Workout-Tracker für Android (Expo / React Native). Spezifikation: [`../SPEC.md`
 - Rekord-Abzeichen 🏆 im Workout-Detail (ab der zweiten Einheit einer Übung)
 - Wochen- und Monatsrückblicke mit Vergleich zum Vorzeitraum, Ø Gefühl/Energie, Top-Übungen, Rekorden
 
+## Stand: Phase 4 ✅
+- Körpermaße: 12 Standard-Maße + eigene Felder, ein Wert pro Tag und Feld, Datum wählbar, Verlauf mit Chart, Veränderung zum Vorwert und seit Beginn; cm/in bzw. kg/lbs je nach Einstellung
+- Fototagebuch: Fotos aus Kamera/Galerie mit Pose (Vorne/Seite/Hinten/Sonstige), privat im App-Speicher, Gewicht des Tages dazu
+- Vorher/Nachher: nebeneinander oder mit Schieberegler, Datum pro Seite wählbar
+- App-Sperre (Fingerabdruck/Gesicht/PIN): Aus, nur Fototagebuch (Standard) oder ganze App; sperrt wieder nach Hintergrund
+- Eigenes Foto/Video pro Übung (Video öffnet im System-Player)
+
 ## APK / Updates
 - APK-Builds über EAS (`eas.json`, Profil `preview`), Projekt: https://expo.dev/accounts/martinjo90/projects/satzwerk
 - Updates ohne Neuinstallation über EAS Update (Kanal `preview`), solange keine neuen nativen Module dazukommen

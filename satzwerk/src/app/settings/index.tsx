@@ -7,7 +7,7 @@ import { useSettings } from '@/stores/settings';
 import { spacing } from '@/theme/colors';
 
 export default function SettingsScreen() {
-  const { unit, theme, setUnit, setTheme } = useSettings();
+  const { unit, theme, setUnit, setTheme, appLock, setAppLock } = useSettings();
   const active = useActiveEquipment();
   return (
     <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.sm }}>
@@ -37,6 +37,23 @@ export default function SettingsScreen() {
           value={theme}
           onChange={setTheme}
         />
+      </Card>
+
+      <SectionHeader>Privatsphäre</SectionHeader>
+      <Card>
+        <AppText style={{ fontWeight: '600' }}>App-Sperre</AppText>
+        <Segmented
+          options={[
+            { value: 'off', label: 'Aus' },
+            { value: 'photos', label: 'Fototagebuch' },
+            { value: 'app', label: 'Ganze App' },
+          ]}
+          value={appLock}
+          onChange={setAppLock}
+        />
+        <AppText variant="caption" muted>
+          Entsperren per Fingerabdruck, Gesicht oder Geräte-PIN. Die Sperre greift wieder, sobald die App im Hintergrund war.
+        </AppText>
       </Card>
 
       <SectionHeader>Equipment</SectionHeader>

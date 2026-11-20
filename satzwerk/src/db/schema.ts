@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { index, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { index, integer, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 import type { Equipment, LoggingType, Muscle } from '@/domain/catalog';
 import type { EquipmentConfig } from '@/domain/equipment';
@@ -131,6 +131,48 @@ export const workoutSets = sqliteTable(
   (t) => [index('wset_wex_idx').on(t.workoutExerciseId)],
 );
 
+/** Eigene Messfelder (zusätzlich zu den Standard-Maßen). */
+export const measurementFields = sqliteTable('measurement_fields', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  /** 'cm' | 'kg' | '%' | '' */
+  unit: text('unit').notNull().default('cm'),
+  ...timestamps,
+});
+
+/** Ein Messwert pro Tag und Feld. `day` = lokales Datum 'YYYY-MM-DD'. */
+export const measurements = sqliteTable(
+  'measurements',
+  {
+    id: text('id').primaryKey(),
+    day: text('day').notNull(),
+    key: text('key').notNull(),
+    /** Intern immer kg bzw. cm bzw. %. */
+    value: real('value').notNull(),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex('measurements_day_key_idx').on(t.day, t.key)],
+);
+
+export type PhotoPose = 'front' | 'side' | 'back' | 'other';
+
+export const progressPhotos = sqliteTable(
+  'progress_photos',
+  {
+    id: text('id').primaryKey(),
+    day: text('day').notNull(),
+    pose: text('pose').$type<PhotoPose>().notNull(),
+    /** Dateiname im App-Speicher (native) bzw. Daten-URI (Web). */
+    uri: text('uri').notNull(),
+    note: text('note').notNull().default(''),
+    ...timestamps,
+  },
+  (t) => [index('photos_day_idx').on(t.day)],
+);
+
+export type MeasurementRow = typeof measurements.$inferSelect;
+export type MeasurementFieldRow = typeof measurementFields.$inferSelect;
+export type ProgressPhotoRow = typeof progressPhotos.$inferSelect;
 export type RoutineRow = typeof routines.$inferSelect;
 export type RoutineFolderRow = typeof routineFolders.$inferSelect;
 export type WorkoutRow = typeof workouts.$inferSelect;

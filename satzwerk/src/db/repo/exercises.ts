@@ -2,6 +2,7 @@ import { asc, eq } from 'drizzle-orm';
 
 import type { Equipment, LoggingType, Muscle } from '@/domain/catalog';
 import { newId } from '@/lib/id';
+import { deletePhotoFile } from '@/lib/photo-storage';
 
 import { db } from '../client';
 import { exercises } from '../schema';
@@ -63,3 +64,10 @@ export async function archiveExercise(id: string): Promise<void> {
 
 /** Alle Übungen inkl. archivierter – für Anzeige in Verlauf und Routinen. */
 export const allExercisesWithArchivedQuery = () => db.select().from(exercises);
+
+/** Setzt bzw. entfernt das eigene Foto/Video einer Übung (alte Datei wird gelöscht). */
+export async function setExerciseMedia(id: string, mediaUri: string | null): Promise<void> {
+  const [ex] = await db.select({ mediaUri: exercises.mediaUri }).from(exercises).where(eq(exercises.id, id));
+  await db.update(exercises).set({ mediaUri, updatedAt: new Date() }).where(eq(exercises.id, id));
+  if (ex?.mediaUri && ex.mediaUri !== mediaUri) deletePhotoFile(ex.mediaUri);
+}
