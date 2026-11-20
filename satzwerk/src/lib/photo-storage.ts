@@ -61,3 +61,23 @@ export async function openInSystemViewer(stored: string): Promise<boolean> {
 export function isVideo(stored: string): boolean {
   return /\.(mp4|mov|m4v)$/i.test(stored) || stored.startsWith('data:video');
 }
+
+/** Rohdaten einer gespeicherten Datei (für das Backup). null, wenn sie fehlt. */
+export async function readStoredFile(stored: string): Promise<Uint8Array | null> {
+  if (Platform.OS === 'web' || stored.includes(':')) return null;
+  try {
+    const f = new File(photoDir(), stored);
+    return f.exists ? await f.bytes() : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Schreibt eine Datei in den privaten Medienordner (beim Wiederherstellen). */
+export function writeStoredFile(stored: string, bytes: Uint8Array): void {
+  if (Platform.OS === 'web' || stored.includes(':') || stored.includes('/')) return;
+  const f = new File(photoDir(), stored);
+  if (f.exists) f.delete();
+  f.create();
+  f.write(bytes);
+}

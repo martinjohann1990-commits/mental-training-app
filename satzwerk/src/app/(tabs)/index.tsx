@@ -21,6 +21,7 @@ import type { RoutineRow } from '@/db/schema';
 import { routineToDraftExercises } from '@/domain/routine';
 import { formatDuration, formatWeight } from '@/domain/units';
 import { GoalCard, HabitTodayRow } from '@/components/habits-goals';
+import { useBackupReminder } from '@/hooks/use-backup-reminder';
 import { useBodyData } from '@/hooks/use-body';
 import { useExerciseMap } from '@/hooks/use-exercise-map';
 import { useGoals } from '@/hooks/use-goals';
@@ -74,6 +75,7 @@ export default function TrainingScreen() {
   const [folderName, setFolderName] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const { habits, today } = useHabits();
+  const backup = useBackupReminder();
   const { goals } = useGoals();
   const { fields } = useBodyData();
   const openGoals = goals.filter((g) => !g.evaluation.reached).slice(0, 3);
@@ -98,6 +100,21 @@ export default function TrainingScreen() {
       </View>
 
       <ActiveBanner />
+      {backup.remind && (
+        <Card style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderWidth: 1, borderColor: c.accent }}>
+          <Icon name="cloud-alert-outline" color={c.accent} size={28} />
+          <View style={{ flex: 1 }}>
+            <AppText style={{ fontWeight: '700' }}>{backup.daysSince === null ? 'Noch kein Backup' : `Letztes Backup vor ${backup.daysSince} Tagen`}</AppText>
+            <AppText variant="caption" muted>
+              Deine Daten liegen nur auf diesem Handy.
+            </AppText>
+            <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm }}>
+              <Button title="Jetzt sichern" small onPress={() => router.push('/settings/backup')} />
+              <Button title="Später" small variant="ghost" onPress={backup.snooze} />
+            </View>
+          </View>
+        </Card>
+      )}
       {!draft && <Button title="Leeres Workout starten" icon="play" onPress={() => startWorkoutFrom(greetingName(), [])} />}
 
       {habits.length > 0 && (

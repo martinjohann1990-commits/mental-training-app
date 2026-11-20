@@ -1,5 +1,5 @@
 import { drizzle } from 'drizzle-orm/expo-sqlite';
-import { openDatabaseAsync } from 'expo-sqlite';
+import { openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
 
 import * as schema from './schema';
 
@@ -11,6 +11,7 @@ function createDb(sqlite: Parameters<typeof drizzle>[0]) {
 export type Db = ReturnType<typeof createDb>;
 
 let instance: Db | null = null;
+let sqliteInstance: SQLiteDatabase | null = null;
 
 /**
  * Öffnet die Datenbank einmalig. Muss vor jedem Zugriff auf `db` abgeschlossen sein
@@ -20,6 +21,7 @@ export async function initDatabase(): Promise<Db> {
   if (instance) return instance;
   const sqlite = await openDatabaseAsync(DATABASE_NAME, { enableChangeListener: true });
   await sqlite.execAsync('PRAGMA foreign_keys = ON;');
+  sqliteInstance = sqlite;
   instance = createDb(sqlite);
   return instance;
 }
@@ -32,3 +34,9 @@ export const db = new Proxy({} as Db, {
     return typeof value === 'function' ? (value as (...a: unknown[]) => unknown).bind(instance) : value;
   },
 });
+
+/** Rohe SQLite-Verbindung (für Backup/Wiederherstellung). */
+export function getSqlite(): SQLiteDatabase {
+  if (!sqliteInstance) throw new Error('Datenbank ist noch nicht initialisiert.');
+  return sqliteInstance;
+}

@@ -46,6 +46,11 @@ Workout-Tracker für Android (Expo / React Native). Spezifikation: [`../SPEC.md`
 - Plan überarbeiten: Prompt mit aktuellem Plan + Verlaufszusammenfassung (Frequenz, Gefühl/Energie, Körpergewicht, Ziele, Trend & RPE je Übung); Ergebnis ersetzt den Plan oder wird neuer Ordner
 - Außerdem: Tastatur verdeckt keine Felder mehr (Android edge-to-edge), eigenes Equipment mit Gewichten
 
+## Stand: Phase 7 ✅ – alle Phasen abgeschlossen
+- Backup (Einstellungen → Backup & Wiederherstellung): ZIP mit `data.json` (alle Tabellen roh, verlustfrei) + `photos/` (Fortschrittsfotos, Übungsmedien); Teilen-Menü zum Speichern in Google Drive o. ä.
+- Wiederherstellen: Datei wählen → Prüfung (Format, App-Version, Tabellen) → Vorschau → alles in einer Transaktion ersetzen → Erinnerungen neu planen → App-Neustart
+- Erinnerung auf dem Training-Tab, wenn das letzte Backup fehlt oder älter als 14 Tage ist („Später“ = 3 Tage Ruhe)
+
 ## APK / Updates
 - APK-Builds über EAS (`eas.json`, Profil `preview`), Projekt: https://expo.dev/accounts/martinjo90/projects/satzwerk
 - Updates ohne Neuinstallation über EAS Update (Kanal `preview`), solange keine neuen nativen Module dazukommen

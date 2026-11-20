@@ -101,6 +101,7 @@ export default function RootLayout() {
           <Stack.Screen name="exercise/[id]" options={{ title: 'Übung' }} />
           <Stack.Screen name="exercise/edit" options={{ title: 'Eigene Übung', presentation: 'modal' }} />
           <Stack.Screen name="settings/index" options={{ title: 'Einstellungen' }} />
+          <Stack.Screen name="settings/backup" options={{ title: 'Backup' }} />
           <Stack.Screen name="settings/equipment/index" options={{ title: 'Mein Equipment' }} />
           <Stack.Screen name="settings/equipment/[id]" options={{ title: 'Equipment-Profil' }} />
           <Stack.Screen name="routine/[id]" options={{ title: 'Routine' }} />

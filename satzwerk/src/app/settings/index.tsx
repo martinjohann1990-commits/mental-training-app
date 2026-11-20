@@ -56,6 +56,11 @@ export default function SettingsScreen() {
         </AppText>
       </Card>
 
+      <SectionHeader>Daten</SectionHeader>
+      <Card style={{ paddingVertical: spacing.xs }}>
+        <ListRow icon="archive-outline" title="Backup & Wiederherstellung" subtitle="Alle Daten und Fotos als ZIP" onPress={() => router.push('/settings/backup')} />
+      </Card>
+
       <SectionHeader>Equipment</SectionHeader>
       <Card style={{ paddingVertical: spacing.xs }}>
         <ListRow
