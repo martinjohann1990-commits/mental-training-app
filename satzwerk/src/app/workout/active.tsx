@@ -103,6 +103,9 @@ export default function ActiveWorkoutScreen() {
           <AppText muted>{summary.sets} Sätze</AppText>
           <AppText muted>{Math.round(summary.volume)} kg Volumen</AppText>
         </View>
+        <AppText variant="caption" muted>
+          Tipp: Satznummer antippen = Satztyp · lange drücken = RPE, Notiz, Satz löschen
+        </AppText>
 
         <ExerciseListEditor
           mode="workout"

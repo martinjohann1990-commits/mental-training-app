@@ -99,6 +99,7 @@ export function ExerciseListEditor({ mode, exercises, onChange, previous, onTogg
             onPickWeight={(setKey) => setWeightFor({ ex: ex.key, set: setKey })}
             onPatchSet={(setKey, patch) => patchSet(ex.key, setKey, patch)}
             onAddSet={() => onChange((l) => ops.addSet(l, ex.key))}
+            onRemoveSet={mode === 'routine' ? (setKey) => onChange((l) => ops.removeSet(l, ex.key, setKey)) : undefined}
             onToggleSet={onToggleSet ? (setKey) => onToggleSet(ex.key, setKey) : undefined}
             onStartInterval={ex.interval && onIntervalResult ? () => setIntervalFor(ex.key) : undefined}
           />

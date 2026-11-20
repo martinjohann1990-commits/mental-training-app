@@ -14,6 +14,7 @@ import { confirmAction, notify } from '@/lib/confirm';
 import { goBack } from '@/lib/navigation';
 import { startWorkoutFrom } from '@/lib/start-workout';
 import { spacing } from '@/theme/colors';
+import { useColors } from '@/theme/use-theme';
 
 export default function RoutineScreen() {
   const { id, folderId } = useLocalSearchParams<{ id: string; folderId?: string }>();
@@ -35,6 +36,8 @@ function RoutineForm({ routine, initialFolderId }: { routine: RoutineRow | null;
   const [exercises, setExercises] = useState<DraftExercise[]>(() => routineToDraftExercises(routine?.exercises ?? []));
   const [dirty, setDirty] = useState(!routine);
   const [saving, setSaving] = useState(false);
+  const [savedAt, setSavedAt] = useState<number | null>(null);
+  const c = useColors();
 
   const change = (fn: (l: DraftExercise[]) => DraftExercise[]) => {
     setExercises(fn);
@@ -52,6 +55,7 @@ function RoutineForm({ routine, initialFolderId }: { routine: RoutineRow | null;
       if (routine) {
         await updateRoutine(routine.id, input);
         setDirty(false);
+        setSavedAt(Date.now());
         return routine.id;
       }
       const newId = await createRoutine(input);
@@ -98,12 +102,17 @@ function RoutineForm({ routine, initialFolderId }: { routine: RoutineRow | null;
 
         <SectionHeader>Übungen</SectionHeader>
         <AppText variant="caption" muted>
-          Werte sind Vorgaben – beim Workout werden sie vorausgefüllt. Satznummer antippen = Satztyp ändern.
+          Werte sind Vorgaben – beim Workout werden sie vorausgefüllt. Satznummer antippen = Satztyp ändern, ✕ = Satz entfernen, ⋮ = Übungsoptionen.
         </AppText>
         <ExerciseListEditor mode="routine" exercises={exercises} onChange={change} />
 
         <View style={{ gap: spacing.sm, marginTop: spacing.lg }}>
-          <Button title={saving ? 'Speichern …' : 'Routine speichern'} icon="content-save-outline" disabled={saving || !dirty} onPress={() => void save()} />
+          <Button title={saving ? 'Speichern …' : 'Routine speichern'} icon="content-save-outline" disabled={saving} onPress={() => void save()} />
+          {savedAt && !dirty && (
+            <AppText variant="caption" style={{ color: c.success, textAlign: 'center' }}>
+              ✓ Gespeichert
+            </AppText>
+          )}
           {routine && (
             <Button
               title="Workout starten"

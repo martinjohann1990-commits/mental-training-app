@@ -27,6 +27,7 @@ type Props = {
   onPickWeight: (setKey: string) => void;
   onPatchSet: (setKey: string, patch: Partial<DraftSet>) => void;
   onAddSet: () => void;
+  onRemoveSet?: (setKey: string) => void;
   onToggleSet?: (setKey: string) => void;
   onStartInterval?: () => void;
 };
@@ -111,7 +112,7 @@ export function ExerciseCard(props: Props) {
             {f === 'weight' ? (isBodyweight ? `+${unit}` : unit) : f === 'reps' && fields.includes('repsRight') ? 'L' : FIELD_LABEL[f]}
           </AppText>
         ))}
-        {mode === 'workout' && <View style={styles.colCheck} />}
+        {(mode === 'workout' || props.onRemoveSet) && <View style={styles.colCheck} />}
       </View>
 
       {exercise.sets.map((s, i) => {
@@ -207,6 +208,16 @@ export function ExerciseCard(props: Props) {
                 </View>
               );
             })}
+            {mode === 'routine' && props.onRemoveSet && (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Satz ${i + 1} entfernen`}
+                hitSlop={6}
+                onPress={() => props.onRemoveSet?.(s.key)}
+                style={[styles.colCheck, styles.check, { backgroundColor: 'transparent' }]}>
+                <Icon name="close" size={20} color={c.textMuted} />
+              </Pressable>
+            )}
             {mode === 'workout' && props.onToggleSet && (
               <Pressable
                 accessibilityRole="checkbox"
