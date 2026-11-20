@@ -12,11 +12,13 @@ type SettingsState = {
   theme: ThemePreference;
   activeProfileId: string;
   appLock: AppLockMode;
+  restSound: boolean;
   load: () => Promise<void>;
   setUnit: (unit: Unit) => void;
   setTheme: (theme: ThemePreference) => void;
   setActiveProfileId: (id: string) => void;
   setAppLock: (mode: AppLockMode) => void;
+  setRestSound: (on: boolean) => void;
 };
 
 const pick = <T extends string>(value: unknown, allowed: readonly T[], fallback: T): T =>
@@ -28,6 +30,7 @@ export const useSettings = create<SettingsState>((set) => ({
   theme: 'dark',
   activeProfileId: 'home',
   appLock: 'photos',
+  restSound: true,
   load: async () => {
     const s = await readAllSettings();
     set({
@@ -36,6 +39,7 @@ export const useSettings = create<SettingsState>((set) => ({
       theme: pick(s.theme, ['dark', 'light', 'system'] as const, 'dark'),
       activeProfileId: typeof s.activeProfileId === 'string' ? s.activeProfileId : 'home',
       appLock: pick(s.appLock, ['off', 'photos', 'app'] as const, 'photos'),
+      restSound: s.restSound !== false,
     });
   },
   setUnit: (unit) => {
@@ -53,5 +57,9 @@ export const useSettings = create<SettingsState>((set) => ({
   setAppLock: (appLock) => {
     set({ appLock });
     void writeSetting('appLock', appLock);
+  },
+  setRestSound: (restSound) => {
+    set({ restSound });
+    void writeSetting('restSound', restSound);
   },
 }));

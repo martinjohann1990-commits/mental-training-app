@@ -1,6 +1,8 @@
 import * as Haptics from 'expo-haptics';
 import * as Notifications from 'expo-notifications';
-import { Platform, Vibration } from 'react-native';
+import { AppState, Platform, Vibration } from 'react-native';
+
+import { playSound } from './sounds';
 
 const CHANNEL_ID = 'rest-timer';
 let initialised = false;
@@ -11,12 +13,11 @@ export async function initRestAlerts(): Promise<void> {
   if (initialised || Platform.OS === 'web') return;
   initialised = true;
   Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowBanner: true,
-      shouldShowList: true,
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-    }),
+    handleNotification: async (n) => {
+      // Pausen-Ende im Vordergrund: Die App piept selbst → Benachrichtigung stumm (kein Doppel-Ton).
+      const silent = n.request.content.data?.kind === 'rest' && AppState.currentState === 'active';
+      return { shouldShowBanner: !silent, shouldShowList: !silent, shouldPlaySound: !silent, shouldSetBadge: false };
+    },
   });
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
@@ -51,6 +52,7 @@ export async function scheduleRestEnd(seconds: number, nextExerciseName?: string
         body: nextExerciseName ? `Weiter mit: ${nextExerciseName}` : 'Weiter geht’s mit dem nächsten Satz.',
         sound: 'default',
         priority: Notifications.AndroidNotificationPriority.HIGH,
+        data: { kind: 'rest' },
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
@@ -74,6 +76,7 @@ export async function cancelRestEnd(id: string | null | undefined): Promise<void
 
 /** Haptisches Feedback im Vordergrund (Pause vorbei / Phasenwechsel im Intervall). */
 export function buzz(kind: 'end' | 'tick' | 'phase' = 'end'): void {
+  playSound(kind === 'tick' ? 'tick' : 'end');
   if (Platform.OS === 'web') return;
   if (kind === 'tick') {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

@@ -27,6 +27,22 @@ function ElapsedTitle({ startedAt }: { startedAt: number }) {
   );
 }
 
+function HintBar({ text, onDone }: { text: string; onDone: () => void }) {
+  const c = useColors();
+  const insets = useSafeAreaInsets();
+  useEffect(() => {
+    const t = setTimeout(onDone, 3500);
+    return () => clearTimeout(t);
+  }, [onDone]);
+  return (
+    <View
+      accessibilityLiveRegion="polite"
+      style={[styles.restWrap, { bottom: Math.max(insets.bottom, spacing.md), backgroundColor: c.surfaceAlt, borderColor: c.accent, borderWidth: 1, borderRadius: 16, padding: spacing.md }]}>
+      <AppText style={{ fontWeight: '700', textAlign: 'center' }}>{text}</AppText>
+    </View>
+  );
+}
+
 export default function ActiveWorkoutScreen() {
   useKeepScreenOn();
   const c = useColors();
@@ -67,8 +83,9 @@ export default function ActiveWorkoutScreen() {
     if (!ex) return undefined;
     let target = ex;
     if (ex.supersetGroup !== null) {
-      // Nach der Runde geht es mit der ersten Übung der Gruppe weiter.
-      target = draft.exercises.find((e) => e.supersetGroup === ex.supersetGroup) ?? ex;
+      // Innerhalb der Runde: nächste Übung der Gruppe; nach der letzten: wieder die erste.
+      const group = draft.exercises.filter((e) => e.supersetGroup === ex.supersetGroup);
+      target = group[group.indexOf(ex) + 1] ?? group[0] ?? ex;
     } else if (ex.sets.every((s) => s.completed || s.key === setKey)) {
       target = draft.exercises[i + 1] ?? ex;
     }
@@ -104,7 +121,7 @@ export default function ActiveWorkoutScreen() {
           <AppText muted>{Math.round(summary.volume)} kg Volumen</AppText>
         </View>
         <AppText variant="caption" muted>
-          Tipp: Satznummer antippen = Satztyp · lange drücken = RPE, Notiz, Satz löschen
+          Tipp: Satznummer antippen = Satztyp · lange drücken = RPE & Notiz · ✕ = Satz löschen
         </AppText>
 
         <ExerciseListEditor
@@ -137,6 +154,7 @@ export default function ActiveWorkoutScreen() {
         />
       </FormScrollView>
 
+      {store.hint && !draft.rest && <HintBar key={store.hint.id} text={store.hint.text} onDone={store.clearHint} />}
       {draft.rest && (
         <View style={[styles.restWrap, { bottom: Math.max(insets.bottom, spacing.md) }]}>
           <RestBar rest={draft.rest} onAdjust={store.adjustRest} onSkip={store.skipRest} />

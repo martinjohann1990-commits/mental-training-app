@@ -10,6 +10,9 @@ const STORAGE_KEY = 'activeWorkout';
 
 type State = {
   draft: WorkoutDraft | null;
+  /** Kurzer Hinweis, z. B. „Supersatz – weiter mit …“ (id ändert sich bei jedem neuen Hinweis). */
+  hint: { id: number; text: string } | null;
+  clearHint: () => void;
   hydrated: boolean;
   hydrate: () => Promise<void>;
   start: (init: { name: string; routineId?: string | null; exercises?: DraftExercise[] }) => void;
@@ -57,6 +60,8 @@ export const useActiveWorkout = create<State>((set, get) => {
 
   return {
     draft: null,
+    hint: null,
+    clearHint: () => set({ hint: null }),
     hydrated: false,
     hydrate: async () => {
       const saved = (await readSetting(STORAGE_KEY)) as WorkoutDraft | null;
@@ -93,8 +98,15 @@ export const useActiveWorkout = create<State>((set, get) => {
       if (!next) return false;
       update((dd) => ({ ...dd, exercises: next }));
       if (!wasCompleted) {
-        const rest = restAfterSet(next, next.findIndex((e) => e.key === exKey));
+        const idx = next.findIndex((e) => e.key === exKey);
+        const rest = restAfterSet(next, idx);
         if (rest > 0) get().startRest(rest, nextExerciseName);
+        else if (next[idx]?.supersetGroup !== null) {
+          // Im Supersatz/Zirkel läuft die Pause erst nach der letzten Übung der Runde.
+          const group = next.filter((e) => e.supersetGroup === next[idx].supersetGroup);
+          const label = group.length > 2 ? 'Zirkel' : 'Supersatz';
+          set({ hint: { id: Date.now(), text: `${label}: ohne Pause weiter${nextExerciseName ? ` mit ${nextExerciseName}` : ''} – Pause nach der Runde` } });
+        }
       }
       return true;
     },

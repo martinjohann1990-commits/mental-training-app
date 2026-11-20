@@ -11,6 +11,7 @@ import { initDatabase } from '@/db/client';
 import { seedDatabase } from '@/db/seed';
 import { AppLockOverlay } from '@/components/lock-gate';
 import { initRestAlerts } from '@/lib/rest-alerts';
+import { initSounds } from '@/lib/sounds';
 import { subscribeAutoLock } from '@/stores/app-lock';
 import { useActiveWorkout } from '@/stores/active-workout';
 import { useSettings } from '@/stores/settings';
@@ -36,6 +37,7 @@ function useDatabaseReady() {
       await useActiveWorkout.getState().hydrate();
       await initRestAlerts().catch(() => {});
       subscribeAutoLock();
+      void initSounds();
     })()
       .then(() => !cancelled && setReady(true))
       .catch((e: unknown) => !cancelled && setError(e instanceof Error ? e : new Error(String(e))));

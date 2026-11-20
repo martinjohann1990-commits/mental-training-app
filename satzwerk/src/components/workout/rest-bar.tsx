@@ -32,11 +32,19 @@ export function RestBar({
   const remaining = Math.max(0, Math.ceil((rest.endsAt - now) / 1000));
   const progress = rest.total > 0 ? Math.min(1, remaining / rest.total) : 0;
   const firedFor = useRef<number | null>(null);
+  const lastTick = useRef<number | null>(null);
 
   useEffect(() => {
+    // 3-2-1: kurzer Ton
+    if (remaining > 0 && remaining <= 3 && lastTick.current !== remaining) {
+      lastTick.current = remaining;
+      buzz('tick');
+    }
     if (remaining === 0 && firedFor.current !== rest.endsAt) {
       firedFor.current = rest.endsAt;
-      buzz('end');
+      // Nur piepen, wenn das Ende gerade erst erreicht wurde (nicht nach Rückkehr aus dem Hintergrund –
+      // dann hat bereits die Benachrichtigung mit Ton gemeldet).
+      if (Date.now() - rest.endsAt < 3000) buzz('end');
       onSkip();
     }
   }, [remaining, rest.endsAt, onSkip]);

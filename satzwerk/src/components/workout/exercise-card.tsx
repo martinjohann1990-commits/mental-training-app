@@ -112,7 +112,8 @@ export function ExerciseCard(props: Props) {
             {f === 'weight' ? (isBodyweight ? `+${unit}` : unit) : f === 'reps' && fields.includes('repsRight') ? 'L' : FIELD_LABEL[f]}
           </AppText>
         ))}
-        {(mode === 'workout' || props.onRemoveSet) && <View style={styles.colCheck} />}
+        {props.onRemoveSet && <View style={mode === 'workout' ? styles.colX : styles.colCheck} />}
+        {mode === 'workout' && <View style={styles.colCheck} />}
       </View>
 
       {exercise.sets.map((s, i) => {
@@ -208,13 +209,13 @@ export function ExerciseCard(props: Props) {
                 </View>
               );
             })}
-            {mode === 'routine' && props.onRemoveSet && (
+            {props.onRemoveSet && (
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={`Satz ${i + 1} entfernen`}
-                hitSlop={6}
+                hitSlop={4}
                 onPress={() => props.onRemoveSet?.(s.key)}
-                style={[styles.colCheck, styles.check, { backgroundColor: 'transparent' }]}>
+                style={[mode === 'workout' ? styles.colX : styles.colCheck, styles.check, { backgroundColor: 'transparent' }]}>
                 <Icon name="close" size={20} color={c.textMuted} />
               </Pressable>
             )}
@@ -245,5 +246,6 @@ const styles = StyleSheet.create({
   colPrev: { flex: 1.3, minWidth: 0, alignItems: 'center', textAlign: 'center' },
   colField: { flex: 1, minWidth: 0, alignItems: 'stretch', textAlign: 'center' },
   colCheck: { width: 40 },
+  colX: { width: 26 },
   check: { height: 38, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
 });

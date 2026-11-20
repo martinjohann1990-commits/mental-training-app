@@ -8,6 +8,7 @@ import { type DraftExercise, type DraftSet, type IntervalConfig, type SetValues,
 import { useActiveEquipment } from '@/hooks/use-equipment';
 import { useEquipmentCatalog } from '@/hooks/use-equipment-catalog';
 import { useExerciseMap } from '@/hooks/use-exercise-map';
+import { confirmAction } from '@/lib/confirm';
 import { useSettings } from '@/stores/settings';
 import { spacing } from '@/theme/colors';
 
@@ -99,7 +100,13 @@ export function ExerciseListEditor({ mode, exercises, onChange, previous, onTogg
             onPickWeight={(setKey) => setWeightFor({ ex: ex.key, set: setKey })}
             onPatchSet={(setKey, patch) => patchSet(ex.key, setKey, patch)}
             onAddSet={() => onChange((l) => ops.addSet(l, ex.key))}
-            onRemoveSet={mode === 'routine' ? (setKey) => onChange((l) => ops.removeSet(l, ex.key, setKey)) : undefined}
+            onRemoveSet={(setKey) => {
+              const set = ex.sets.find((x) => x.key === setKey);
+              const remove = () => onChange((l) => ops.removeSet(l, ex.key, setKey));
+              // Abgehakte Sätze im Workout nur mit Rückfrage löschen (Schutz vor Fehltipp neben dem Haken).
+              if (mode === 'workout' && set?.completed) confirmAction('Satz löschen?', 'Der abgehakte Satz wird entfernt.', 'Löschen', remove);
+              else remove();
+            }}
             onToggleSet={onToggleSet ? (setKey) => onToggleSet(ex.key, setKey) : undefined}
             onStartInterval={ex.interval && onIntervalResult ? () => setIntervalFor(ex.key) : undefined}
           />

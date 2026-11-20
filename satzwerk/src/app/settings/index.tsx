@@ -1,13 +1,14 @@
 import { router } from 'expo-router';
 import { ScrollView, View } from 'react-native';
 
-import { AppText, Card, ListRow, Segmented, SectionHeader } from '@/components/ui';
+import { AppText, Button, Card, ListRow, Segmented, SectionHeader, ToggleRow } from '@/components/ui';
 import { useActiveEquipment } from '@/hooks/use-equipment';
+import { playSound } from '@/lib/sounds';
 import { useSettings } from '@/stores/settings';
 import { spacing } from '@/theme/colors';
 
 export default function SettingsScreen() {
-  const { unit, theme, setUnit, setTheme, appLock, setAppLock } = useSettings();
+  const { unit, theme, setUnit, setTheme, appLock, setAppLock, restSound, setRestSound } = useSettings();
   const active = useActiveEquipment();
   return (
     <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.sm }}>
@@ -37,6 +38,20 @@ export default function SettingsScreen() {
           value={theme}
           onChange={setTheme}
         />
+      </Card>
+
+      <SectionHeader>Pausentimer</SectionHeader>
+      <Card>
+        <ToggleRow
+          label="Signalton"
+          hint="3-2-1-Ticks und Ton am Pausenende (zusätzlich Vibration). Bei gesperrtem Handy meldet sich die Benachrichtigung."
+          value={restSound}
+          onChange={setRestSound}
+        />
+        <Button title="Ton testen" icon="volume-high" variant="secondary" small onPress={() => playSound('end', true)} />
+        <AppText variant="caption" muted>
+          Der Ton nutzt die Medienlautstärke deines Handys.
+        </AppText>
       </Card>
 
       <SectionHeader>Privatsphäre</SectionHeader>
