@@ -23,6 +23,8 @@ export default function ProfileScreen() {
         <ListRow icon="flag-checkered" title="Ziele" subtitle="Kraft, Körpergewicht, Maße, Serien" onPress={() => router.push('/goals')} />
         <Divider />
         <ListRow icon="checkbox-marked-circle-outline" title="Gewohnheiten" subtitle="Streaks, Heatmap, Erinnerungen" onPress={() => router.push('/habits')} />
+        <Divider />
+        <ListRow icon="creation" title="KI-Trainingsplan" subtitle="Plan erstellen oder überarbeiten lassen" onPress={() => router.push('/ai')} />
       </Card>
       <SectionHeader>App</SectionHeader>
       <Card style={{ paddingVertical: spacing.xs }}>

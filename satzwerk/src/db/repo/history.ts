@@ -21,6 +21,7 @@ export async function loadHistory(): Promise<HistoryData> {
       repsRight: workoutSets.repsRight,
       duration: workoutSets.duration,
       distance: workoutSets.distance,
+      rpe: workoutSets.rpe,
     })
     .from(workoutSets)
     .innerJoin(workoutExercises, eq(workoutSets.workoutExerciseId, workoutExercises.id))

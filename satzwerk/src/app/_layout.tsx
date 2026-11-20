@@ -120,6 +120,9 @@ export default function RootLayout() {
           <Stack.Screen name="goals/index" options={{ title: 'Ziele' }} />
           <Stack.Screen name="goals/edit" options={{ title: 'Ziel', presentation: 'modal' }} />
           <Stack.Screen name="goals/[id]" options={{ title: 'Ziel' }} />
+          <Stack.Screen name="ai/index" options={{ title: 'KI-Trainingsplan' }} />
+          <Stack.Screen name="ai/prompt" options={{ title: 'KI-Plan' }} />
+          <Stack.Screen name="ai/import" options={{ title: 'KI-Plan importieren' }} />
         </Stack>
         <AppLockOverlay />
       </ThemeProvider>

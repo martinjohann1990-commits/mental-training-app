@@ -132,6 +132,7 @@ export default function TrainingScreen() {
       <SectionHeader
         action={
           <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+            <Button title="KI" icon="creation" variant="ghost" small onPress={() => router.push('/ai')} />
             <Button title="Ordner" icon="folder-plus-outline" variant="ghost" small onPress={() => setFolderName('')} />
             <Button title="Routine" icon="plus" variant="ghost" small onPress={() => router.push({ pathname: '/routine/[id]', params: { id: 'new' } })} />
           </View>

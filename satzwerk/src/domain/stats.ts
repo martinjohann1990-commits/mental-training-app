@@ -15,6 +15,7 @@ export type HistorySet = {
   repsRight: number | null;
   duration: number | null;
   distance: number | null;
+  rpe?: number | null;
 };
 
 export type WorkoutMetaLite = {

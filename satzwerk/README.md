@@ -39,6 +39,13 @@ Workout-Tracker für Android (Expo / React Native). Spezifikation: [`../SPEC.md`
 - Gewohnheiten: Ja/Nein, Zahl mit Tagesziel, Trainingsfrequenz (automatisch aus Workouts); täglich oder x-mal pro Woche; Serien, Erfüllungsquote, Heatmap (Nachtragen per Antippen), tägliche Erinnerung
 - Training-Tab: „Heute“ zum schnellen Abhaken + aktive Ziele
 
+## Stand: Phase 6 ✅
+- KI-Trainingsplan (Profil → KI-Trainingsplan oder Training → „KI“): Prompt aus Ziel, Erfahrung, Tagen, Dauer, Einschränkungen, Wünschen und aktivem Equipment (inkl. eigener Geräte); Übungsliste nur mit verfügbarem Equipment
+- Teilen/Kopieren über das System-Menü; Satzwerk sendet selbst nichts an eine KI
+- Import: toleranter JSON-Parser (Markdown, Text drumherum, Komma-Fehler), automatische Zuordnung zur Bibliothek, Vorschläge bei Mehrdeutigkeit, Neu anlegen/Weglassen, Gewichte rasten auf vorhandene KB/KH-Stufen ein, Wdh.-Bereiche als Hinweis
+- Plan überarbeiten: Prompt mit aktuellem Plan + Verlaufszusammenfassung (Frequenz, Gefühl/Energie, Körpergewicht, Ziele, Trend & RPE je Übung); Ergebnis ersetzt den Plan oder wird neuer Ordner
+- Außerdem: Tastatur verdeckt keine Felder mehr (Android edge-to-edge), eigenes Equipment mit Gewichten
+
 ## APK / Updates
 - APK-Builds über EAS (`eas.json`, Profil `preview`), Projekt: https://expo.dev/accounts/martinjo90/projects/satzwerk
 - Updates ohne Neuinstallation über EAS Update (Kanal `preview`), solange keine neuen nativen Module dazukommen
