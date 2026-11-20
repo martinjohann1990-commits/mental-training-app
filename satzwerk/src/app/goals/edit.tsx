@@ -1,7 +1,8 @@
+import { FormScrollView, KeyboardScreen } from '@/components/form-scroll';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 
 import { ExercisePicker } from '@/components/exercise-picker';
 import { AppText, Button, Card, Chip, ChipRow, EmptyState, Segmented, SectionHeader, TextField } from '@/components/ui';
@@ -126,9 +127,9 @@ function GoalForm({ existing, history }: { existing: GoalRow | null; history: No
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardScreen>
       <Stack.Screen options={{ title: existing ? 'Ziel bearbeiten' : 'Neues Ziel' }} />
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 48 }}>
+      <FormScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 48 }}>
         <Segmented
           options={[
             { value: 'strength', label: 'Kraft' },
@@ -244,7 +245,7 @@ function GoalForm({ existing, history }: { existing: GoalRow | null; history: No
             }
           />
         )}
-      </ScrollView>
+      </FormScrollView>
       <ExercisePicker
         visible={pickerOpen}
         onClose={() => setPickerOpen(false)}
@@ -253,6 +254,6 @@ function GoalForm({ existing, history }: { existing: GoalRow | null; history: No
           setPickerOpen(false);
         }}
       />
-    </KeyboardAvoidingView>
+    </KeyboardScreen>
   );
 }

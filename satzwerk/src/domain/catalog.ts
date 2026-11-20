@@ -44,6 +44,17 @@ export const EQUIPMENT = {
 export type Equipment = keyof typeof EQUIPMENT;
 export const EQUIPMENT_KEYS = Object.keys(EQUIPMENT) as Equipment[];
 
+/** Verweis auf ein Gerät: feste Kategorie oder eigenes Gerät (`custom:<id>`). */
+export type EquipmentRef = Equipment | `custom:${string}`;
+
+export function isCustomEquipment(ref: string): ref is `custom:${string}` {
+  return ref.startsWith('custom:');
+}
+
+export function isEquipmentRef(ref: unknown): ref is EquipmentRef {
+  return typeof ref === 'string' && (EQUIPMENT_KEYS.includes(ref as Equipment) || (isCustomEquipment(ref) && ref.length > 7));
+}
+
 export const LOGGING_TYPES = {
   weight_reps: { label: 'Gewicht × Wdh.', hint: 'z. B. Bankdrücken 80 kg × 8' },
   bodyweight_reps: {
@@ -69,7 +80,7 @@ export type ExerciseDefinition = {
   primaryMuscle: Muscle;
   secondaryMuscles: Muscle[];
   /** Alle hier gelisteten Geräte werden benötigt. Leer = kein Equipment. */
-  equipment: Equipment[];
+  equipment: EquipmentRef[];
   loggingType: LoggingType;
   instructions: string;
   /** Bei Komplexen/Flows: IDs der enthaltenen Bewegungen in Reihenfolge. */

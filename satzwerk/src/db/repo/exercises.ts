@@ -1,6 +1,6 @@
 import { asc, eq } from 'drizzle-orm';
 
-import type { Equipment, LoggingType, Muscle } from '@/domain/catalog';
+import type { EquipmentRef, LoggingType, Muscle } from '@/domain/catalog';
 import { newId } from '@/lib/id';
 import { deletePhotoFile } from '@/lib/photo-storage';
 
@@ -11,7 +11,7 @@ export type ExerciseInput = {
   name: string;
   primaryMuscle: Muscle;
   secondaryMuscles: Muscle[];
-  equipment: Equipment[];
+  equipment: EquipmentRef[];
   loggingType: LoggingType;
   instructions: string;
   complexParts: string[] | null;

@@ -1,17 +1,17 @@
-import type { Equipment, Muscle } from './catalog';
+import type { EquipmentRef, Muscle } from './catalog';
 import { canPerform, type EquipmentConfig } from './equipment';
 
 export type FilterableExercise = {
   name: string;
   primaryMuscle: Muscle;
   secondaryMuscles: Muscle[];
-  equipment: Equipment[];
+  equipment: EquipmentRef[];
 };
 
 export type ExerciseFilter = {
   query: string;
   muscle: Muscle | null;
-  equipment: Equipment | null;
+  equipment: EquipmentRef | null;
   /** Nur Übungen, die mit dem aktiven Equipment-Profil möglich sind. */
   onlyAvailable: boolean;
 };

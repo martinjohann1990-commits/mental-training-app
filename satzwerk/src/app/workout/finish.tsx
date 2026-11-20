@@ -1,6 +1,7 @@
+import { FormScrollView, KeyboardScreen } from '@/components/form-scroll';
 import { router, Stack } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { AppText, Button, Card, EmptyState, SectionHeader, TextField } from '@/components/ui';
 import { saveWorkout } from '@/db/repo/workouts';
@@ -75,9 +76,9 @@ export default function FinishWorkoutScreen() {
   const summary = workoutSummary(draft);
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardScreen>
       <Stack.Screen options={{ title: 'Workout abschließen' }} />
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}>
+      <FormScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}>
         <Card style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
           {[
             ['Dauer', formatDuration((endedAt - draft.startedAt) / 1000)],
@@ -120,7 +121,7 @@ export default function FinishWorkoutScreen() {
           }}
         />
         <Button title="Zurück zum Workout" variant="ghost" onPress={() => router.back()} />
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </FormScrollView>
+    </KeyboardScreen>
   );
 }

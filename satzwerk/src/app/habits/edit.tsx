@@ -1,7 +1,8 @@
+import { FormScrollView, KeyboardScreen } from '@/components/form-scroll';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 
 import { AppText, Button, Chip, ChipRow, EmptyState, Segmented, SectionHeader, TextField, ToggleRow } from '@/components/ui';
 import { allHabitsQuery, createHabit, deleteHabit, type HabitInput, updateHabit, validateHabit } from '@/db/repo/habits';
@@ -57,9 +58,9 @@ function HabitForm({ existing }: { existing: HabitRow | null }) {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardScreen>
       <Stack.Screen options={{ title: existing ? 'Gewohnheit bearbeiten' : 'Neue Gewohnheit' }} />
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 48 }}>
+      <FormScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 48 }}>
         {!existing && (
           <>
             <SectionHeader>Vorlagen</SectionHeader>
@@ -154,7 +155,7 @@ function HabitForm({ existing }: { existing: HabitRow | null }) {
             }
           />
         )}
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </FormScrollView>
+    </KeyboardScreen>
   );
 }

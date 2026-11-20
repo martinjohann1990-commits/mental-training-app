@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 
 import { radius, spacing } from '@/theme/colors';
+import { notifyInputFocus } from './form-scroll';
 import { useColors } from '@/theme/use-theme';
 
 export type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
@@ -133,7 +134,7 @@ export function ChipRow({ children }: { children: ReactNode }) {
   return <View style={styles.chipRow}>{children}</View>;
 }
 
-export function TextField({ label, style, ...rest }: TextInputProps & { label?: string }) {
+export function TextField({ label, style, onFocus, ...rest }: TextInputProps & { label?: string }) {
   const c = useColors();
   return (
     <View style={{ gap: spacing.xs }}>
@@ -143,6 +144,10 @@ export function TextField({ label, style, ...rest }: TextInputProps & { label?: 
         </AppText>
       )}
       <TextInput
+        onFocus={(e) => {
+          notifyInputFocus();
+          onFocus?.(e);
+        }}
         accessibilityLabel={rest.accessibilityLabel ?? label}
         placeholderTextColor={c.textMuted}
         style={[

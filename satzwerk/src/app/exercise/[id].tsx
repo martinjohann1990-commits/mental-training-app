@@ -4,12 +4,13 @@ import { Alert, Platform, ScrollView, View } from 'react-native';
 
 import { ExerciseMedia } from '@/components/exercise-media';
 import { ExerciseProgress } from '@/components/exercise-progress';
-import { EQUIPMENT_ICONS } from '@/components/icons';
+import { equipmentIcon } from '@/components/icons';
 import { AppText, Button, Card, Chip, ChipRow, EmptyState, ListRow, SectionHeader } from '@/components/ui';
 import { allExercisesQuery, archiveExercise } from '@/db/repo/exercises';
-import { EQUIPMENT, LOGGING_TYPES, MUSCLES } from '@/domain/catalog';
+import { LOGGING_TYPES, MUSCLES } from '@/domain/catalog';
 import { canPerform } from '@/domain/equipment';
 import { useActiveEquipment } from '@/hooks/use-equipment';
+import { useEquipmentCatalog } from '@/hooks/use-equipment-catalog';
 import { goBack } from '@/lib/navigation';
 import { spacing } from '@/theme/colors';
 import { useColors } from '@/theme/use-theme';
@@ -29,6 +30,7 @@ export default function ExerciseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: all } = useLiveQuery(allExercisesQuery());
   const active = useActiveEquipment();
+  const { label: equipmentLabel } = useEquipmentCatalog();
   const c = useColors();
   const ex = all.find((e) => e.id === id);
 
@@ -73,7 +75,7 @@ export default function ExerciseDetailScreen() {
           {ex.equipment.length === 0 ? (
             <Chip label="Körpergewicht" icon="human-handsup" />
           ) : (
-            ex.equipment.map((e) => <Chip key={e} label={EQUIPMENT[e]} icon={EQUIPMENT_ICONS[e]} />)
+            ex.equipment.map((e) => <Chip key={e} label={equipmentLabel(e)} icon={equipmentIcon(e)} />)
           )}
         </ChipRow>
         {active && (

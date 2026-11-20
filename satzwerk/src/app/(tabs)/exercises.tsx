@@ -6,9 +6,10 @@ import { FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { exerciseIcon } from '@/components/icons';
 import { AppText, Chip, Divider, EmptyState, Icon, ListRow, TextField, ToggleRow } from '@/components/ui';
 import { allExercisesQuery } from '@/db/repo/exercises';
-import { EQUIPMENT, EQUIPMENT_KEYS, type Equipment, MUSCLE_KEYS, MUSCLES, type Muscle } from '@/domain/catalog';
+import { type EquipmentRef, MUSCLE_KEYS, MUSCLES, type Muscle } from '@/domain/catalog';
 import { EMPTY_FILTER, filterExercises } from '@/domain/exercise-filter';
 import { useActiveEquipment } from '@/hooks/use-equipment';
+import { useEquipmentCatalog } from '@/hooks/use-equipment-catalog';
 import { spacing } from '@/theme/colors';
 import { useColors } from '@/theme/use-theme';
 
@@ -18,7 +19,8 @@ export default function ExercisesScreen() {
   const active = useActiveEquipment();
   const [query, setQuery] = useState('');
   const [muscle, setMuscle] = useState<Muscle | null>(null);
-  const [equipment, setEquipment] = useState<Equipment | null>(null);
+  const [equipment, setEquipment] = useState<EquipmentRef | null>(null);
+  const { items: equipmentItems } = useEquipmentCatalog();
   const [onlyAvailable, setOnlyAvailable] = useState(false);
   const deferredQuery = useDeferredValue(query);
 
@@ -57,12 +59,12 @@ export default function ExercisesScreen() {
             </ScrollView>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hscroll}>
               <Chip label="Alle Geräte" selected={!equipment} onPress={() => setEquipment(null)} />
-              {EQUIPMENT_KEYS.map((e) => (
+              {equipmentItems.map((e) => (
                 <Chip
-                  key={e}
-                  label={EQUIPMENT[e]}
-                  selected={equipment === e}
-                  onPress={() => setEquipment(equipment === e ? null : e)}
+                  key={e.ref}
+                  label={e.label}
+                  selected={equipment === e.ref}
+                  onPress={() => setEquipment(equipment === e.ref ? null : e.ref)}
                 />
               ))}
             </ScrollView>

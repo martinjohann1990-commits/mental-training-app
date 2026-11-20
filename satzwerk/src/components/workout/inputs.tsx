@@ -6,6 +6,7 @@ import { formatDecimal, parseDecimal } from '@/lib/number';
 import { radius } from '@/theme/colors';
 import { useColors } from '@/theme/use-theme';
 
+import { notifyInputFocus } from '../form-scroll';
 import { AppText } from '../ui';
 
 function useSyncedText(value: number | null, format: (n: number) => string) {
@@ -44,6 +45,7 @@ export function NumberCell({ value, onChange, placeholder, accessibilityLabel, c
       placeholderTextColor={c.textMuted}
       keyboardType={integer ? 'number-pad' : 'decimal-pad'}
       selectTextOnFocus
+      onFocus={notifyInputFocus}
       onChangeText={(t) => {
         setText(t);
         const neg = allowNegative && t.trim().startsWith('-');
@@ -81,6 +83,7 @@ export function DurationCell({ value, onChange, placeholder, accessibilityLabel,
       placeholderTextColor={c.textMuted}
       keyboardType="numbers-and-punctuation"
       selectTextOnFocus
+      onFocus={notifyInputFocus}
       onChangeText={(t) => {
         setText(t);
         if (t.trim() === '') {

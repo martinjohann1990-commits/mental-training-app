@@ -1,10 +1,10 @@
-import { EQUIPMENT_KEYS, type Equipment, KETTLEBELL_STEPS } from './catalog';
+import { EQUIPMENT_KEYS, type EquipmentRef, isEquipmentRef, KETTLEBELL_STEPS } from './catalog';
 
 export type PlateStock = { weight: number; pairs: number };
 
 export type EquipmentConfig = {
   /** Verfügbare Gerätekategorien. Körpergewicht ist immer verfügbar. */
-  available: Equipment[];
+  available: EquipmentRef[];
   kettlebells: number[];
   dumbbells: { min: number; max: number; step: number };
   barbell: { barWeight: number; plates: PlateStock[] };
@@ -64,12 +64,12 @@ export function normalizeKettlebells(weights: number[]): number[] {
   return [...new Set(weights)].filter((w) => valid.has(w)).sort((a, b) => a - b);
 }
 
-export function isAvailable(config: EquipmentConfig, equipment: Equipment): boolean {
+export function isAvailable(config: EquipmentConfig, equipment: EquipmentRef): boolean {
   return equipment === 'bodyweight' || config.available.includes(equipment);
 }
 
 /** Kann eine Übung mit diesem Equipment ausgeführt werden? */
-export function canPerform(config: EquipmentConfig, required: Equipment[]): boolean {
+export function canPerform(config: EquipmentConfig, required: EquipmentRef[]): boolean {
   return required.every((e) => isAvailable(config, e));
 }
 
@@ -85,7 +85,7 @@ export function parseEquipmentConfig(raw: unknown): EquipmentConfig {
     typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : fallback;
   return {
     available: Array.isArray(r.available)
-      ? r.available.filter((e): e is Equipment => EQUIPMENT_KEYS.includes(e as Equipment))
+      ? [...new Set(r.available.filter(isEquipmentRef))]
       : base.available,
     kettlebells: Array.isArray(r.kettlebells) ? normalizeKettlebells(r.kettlebells) : base.kettlebells,
     dumbbells: {

@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { radius, spacing } from '@/theme/colors';
 import { useColors } from '@/theme/use-theme';
 
+import { FormScrollView } from './form-scroll';
 import { AppText, Icon, type IconName } from './ui';
 
 /** Einfaches Bottom-Sheet auf Basis von Modal. */
@@ -23,7 +24,7 @@ export function Sheet({
   const insets = useSafeAreaInsets();
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
         <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Schließen" />
         <View
           style={[
@@ -36,9 +37,9 @@ export function Sheet({
               {title}
             </AppText>
           )}
-          <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 560 }}>
+          <FormScrollView style={{ maxHeight: 560 }}>
             {children}
-          </ScrollView>
+          </FormScrollView>
         </View>
       </KeyboardAvoidingView>
     </Modal>

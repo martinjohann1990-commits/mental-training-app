@@ -1,10 +1,10 @@
+import { FormScrollView, KeyboardScreen } from '@/components/form-scroll';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { ExercisePicker } from '@/components/exercise-picker';
-import { EQUIPMENT_ICONS } from '@/components/icons';
 import { AppText, Button, Card, Chip, ChipRow, EmptyState, Icon, SectionHeader, TextField, ToggleRow } from '@/components/ui';
 import {
   allExercisesQuery,
@@ -14,15 +14,13 @@ import {
   validateExerciseInput,
 } from '@/db/repo/exercises';
 import {
-  EQUIPMENT,
-  EQUIPMENT_KEYS,
-  type Equipment,
   LOGGING_TYPE_KEYS,
   LOGGING_TYPES,
   MUSCLE_KEYS,
   MUSCLES,
 } from '@/domain/catalog';
 import { goBack } from '@/lib/navigation';
+import { useEquipmentCatalog } from '@/hooks/use-equipment-catalog';
 import { spacing } from '@/theme/colors';
 import { useColors } from '@/theme/use-theme';
 
@@ -71,6 +69,7 @@ function ExerciseForm({
   all: { id: string; name: string }[];
 }) {
   const c = useColors();
+  const { items: equipmentItems } = useEquipmentCatalog();
   const [form, setForm] = useState<ExerciseInput>(initial);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -105,9 +104,9 @@ function ExerciseForm({
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardScreen>
       <Stack.Screen options={{ title: id ? 'Übung bearbeiten' : 'Neue Übung' }} />
-      <ScrollView
+      <FormScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 48 }}>
         <TextField
@@ -150,15 +149,17 @@ function ExerciseForm({
           Nichts ausgewählt = reine Körpergewichtsübung.
         </AppText>
         <ChipRow>
-          {EQUIPMENT_KEYS.filter((e): e is Exclude<Equipment, 'bodyweight'> => e !== 'bodyweight').map((e) => (
-            <Chip
-              key={e}
-              label={EQUIPMENT[e]}
-              icon={EQUIPMENT_ICONS[e]}
-              selected={form.equipment.includes(e)}
-              onPress={() => set('equipment', toggle(form.equipment, e))}
-            />
-          ))}
+          {equipmentItems
+            .filter((e) => e.ref !== 'bodyweight')
+            .map((e) => (
+              <Chip
+                key={e.ref}
+                label={e.label}
+                icon={e.icon}
+                selected={form.equipment.includes(e.ref)}
+                onPress={() => set('equipment', toggle(form.equipment, e.ref))}
+              />
+            ))}
         </ChipRow>
 
         <SectionHeader>Erfassung</SectionHeader>
@@ -221,7 +222,7 @@ function ExerciseForm({
 
         {error && <AppText style={{ color: c.danger }}>{error}</AppText>}
         <Button title={saving ? 'Speichern …' : 'Speichern'} icon="check" disabled={saving} onPress={save} />
-      </ScrollView>
+      </FormScrollView>
 
       <ExercisePicker
         visible={pickerOpen}
@@ -232,6 +233,6 @@ function ExerciseForm({
           setPickerOpen(false);
         }}
       />
-    </KeyboardAvoidingView>
+    </KeyboardScreen>
   );
 }

@@ -6,6 +6,7 @@ import * as ops from '@/domain/draft-ops';
 import { dumbbellWeights } from '@/domain/equipment';
 import { type DraftExercise, type DraftSet, type IntervalConfig, type SetValues, toggleSupersetWithNext } from '@/domain/workout';
 import { useActiveEquipment } from '@/hooks/use-equipment';
+import { useEquipmentCatalog } from '@/hooks/use-equipment-catalog';
 import { useExerciseMap } from '@/hooks/use-exercise-map';
 import { useSettings } from '@/stores/settings';
 import { spacing } from '@/theme/colors';
@@ -33,6 +34,7 @@ export function ExerciseListEditor({ mode, exercises, onChange, previous, onTogg
   const map = useExerciseMap();
   const unit = useSettings((s) => s.unit);
   const equipment = useActiveEquipment();
+  const { byRef: equipmentByRef } = useEquipmentCatalog();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [setFor, setSetFor] = useState<{ ex: string; set: string } | null>(null);
@@ -47,6 +49,9 @@ export function ExerciseListEditor({ mode, exercises, onChange, previous, onTogg
   const weightOptionsFor = (exerciseId: string): number[] | null => {
     const info = map.get(exerciseId);
     if (!info) return null;
+    // Eigene Geräte mit hinterlegten Gewichten haben Vorrang.
+    const custom = info.equipment.map((e) => equipmentByRef.get(e)).find((e) => e?.custom && e.weights.length > 0);
+    if (custom) return custom.weights;
     if (info.equipment.includes('kettlebell')) return kbWeights;
     if (info.equipment.includes('dumbbell') && !info.equipment.includes('barbell')) return dbWeights;
     return null;

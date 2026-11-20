@@ -1,17 +1,21 @@
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Platform, Pressable, StyleSheet, View } from 'react-native';
 
+import { FormScrollView, KeyboardScreen } from '@/components/form-scroll';
 import { EQUIPMENT_ICONS } from '@/components/icons';
+import { Sheet } from '@/components/sheet';
 import { AppText, Button, Card, Chip, ChipRow, Divider, EmptyState, Icon, SectionHeader, TextField, ToggleRow } from '@/components/ui';
+import { createCustomEquipment, customEquipmentQuery, deleteCustomEquipment, parseWeightList, updateCustomEquipment } from '@/db/repo/custom-equipment';
 import { allProfilesQuery, deleteProfile, saveProfile } from '@/db/repo/equipment';
 import type { EquipmentProfileRow } from '@/db/schema';
-import { EQUIPMENT, EQUIPMENT_KEYS, KETTLEBELL_STEPS } from '@/domain/catalog';
+import { EQUIPMENT, EQUIPMENT_KEYS, type EquipmentRef, KETTLEBELL_STEPS } from '@/domain/catalog';
 import { dumbbellWeights, type EquipmentConfig, normalizeKettlebells, parseEquipmentConfig } from '@/domain/equipment';
 import { formatDecimal, parseDecimal } from '@/lib/number';
-import { useSettings } from '@/stores/settings';
+import { confirmAction } from '@/lib/confirm';
 import { goBack } from '@/lib/navigation';
+import { useSettings } from '@/stores/settings';
 import { radius, spacing } from '@/theme/colors';
 import { useColors } from '@/theme/use-theme';
 
@@ -108,20 +112,23 @@ function ProfileForm({
   const [name, setName] = useState(profile.name);
   const [cfg, setCfg] = useState<EquipmentConfig>(() => parseEquipmentConfig(profile.config));
   const [dirty, setDirty] = useState(false);
+  const { data: customItems } = useLiveQuery(customEquipmentQuery());
+  const [customEdit, setCustomEdit] = useState<{ id: string | null; name: string; weights: string } | null>(null);
 
   const update = (patch: Partial<EquipmentConfig>) => {
     setCfg({ ...cfg, ...patch });
     setDirty(true);
   };
-  const has = (e: (typeof EQUIPMENT_KEYS)[number]) => cfg.available.includes(e);
-  const toggleEquipment = (e: (typeof EQUIPMENT_KEYS)[number], on: boolean) =>
+  const has = (e: EquipmentRef) => cfg.available.includes(e);
+  const toggleEquipment = (e: EquipmentRef, on: boolean) =>
     update({ available: on ? [...cfg.available, e] : cfg.available.filter((x) => x !== e) });
 
   const dbWeights = dumbbellWeights(cfg.dumbbells);
   const isActive = profile.id === activeProfileId;
 
   return (
-    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: spacing.lg, gap: spacing.sm, paddingBottom: 48 }}>
+    <KeyboardScreen>
+      <FormScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: spacing.lg, gap: spacing.sm, paddingBottom: 48 }}>
       <Stack.Screen options={{ title: profile.name }} />
       <TextField
         label="Profilname"
@@ -150,6 +157,45 @@ function ProfileForm({
       <AppText variant="caption" muted>
         Körpergewicht ist immer verfügbar.
       </AppText>
+
+      <SectionHeader action={<Button title="Gerät" icon="plus" variant="ghost" small onPress={() => setCustomEdit({ id: null, name: '', weights: '' })} />}>
+        Eigene Geräte
+      </SectionHeader>
+      <Card style={{ paddingVertical: customItems.length ? spacing.xs : spacing.lg }}>
+        {customItems.length === 0 && (
+          <AppText muted>z. B. Sandsack, Gymnastikringe, Slam Ball, Steel Mace, Bulgarian Bag – mit eigenen Gewichten.</AppText>
+        )}
+        {customItems.map((ci, i) => {
+          const ref = `custom:${ci.id}` as EquipmentRef;
+          return (
+            <View key={ci.id}>
+              {i > 0 && <Divider />}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${ci.name} bearbeiten`}
+                  hitSlop={6}
+                  onPress={() => setCustomEdit({ id: ci.id, name: ci.name, weights: ci.weights.map(formatDecimal).join(' ') })}>
+                  <Icon name="pencil-outline" color={c.textMuted} />
+                </Pressable>
+                <View style={{ flex: 1 }}>
+                  <ToggleRow
+                    label={ci.name}
+                    hint={ci.weights.length ? `${ci.weights.map(formatDecimal).join(' · ')} kg` : undefined}
+                    value={has(ref)}
+                    onChange={(v) => toggleEquipment(ref, v)}
+                  />
+                </View>
+              </View>
+            </View>
+          );
+        })}
+      </Card>
+      {customItems.length > 0 && (
+        <AppText variant="caption" muted>
+          Eigene Geräte gelten für alle Profile; der Schalter legt fest, ob sie in diesem Profil vorhanden sind.
+        </AppText>
+      )}
 
       {has('kettlebell') && (
         <>
@@ -269,7 +315,55 @@ function ProfileForm({
           />
         )}
       </View>
-    </ScrollView>
+        <Sheet visible={!!customEdit} onClose={() => setCustomEdit(null)} title={customEdit?.id ? 'Gerät bearbeiten' : 'Eigenes Gerät'}>
+          {customEdit && (
+            <View style={{ gap: spacing.md }}>
+              <TextField label="Name" value={customEdit.name} onChangeText={(name) => setCustomEdit({ ...customEdit, name })} placeholder="z. B. Sandsack" maxLength={40} autoFocus />
+              <TextField
+                label="Gewichte in kg (optional)"
+                value={customEdit.weights}
+                onChangeText={(weights) => setCustomEdit({ ...customEdit, weights })}
+                placeholder="z. B. 10 15 20 oder 10; 12,5; 15"
+                keyboardType="numbers-and-punctuation"
+              />
+              <AppText variant="caption" muted>
+                Mit Gewichten erscheint beim Loggen eine Auswahl wie bei Kettlebells.
+              </AppText>
+              <Button
+                title="Speichern"
+                disabled={!customEdit.name.trim()}
+                onPress={async () => {
+                  const weights = parseWeightList(customEdit.weights);
+                  if (customEdit.id) {
+                    await updateCustomEquipment(customEdit.id, customEdit.name, weights);
+                  } else {
+                    const ref = await createCustomEquipment(customEdit.name, weights);
+                    toggleEquipment(ref, true);
+                  }
+                  setCustomEdit(null);
+                }}
+              />
+              {customEdit.id && (
+                <Button
+                  title="Gerät löschen"
+                  icon="trash-can-outline"
+                  variant="danger"
+                  onPress={() => {
+                    const id = customEdit.id!;
+                    const name = customEdit.name;
+                    setCustomEdit(null);
+                    confirmAction('Gerät löschen?', `„${name}“ wird aus allen Profilen und Übungen entfernt.`, 'Löschen', async () => {
+                      await deleteCustomEquipment(id);
+                      update({ available: cfg.available.filter((e) => e !== `custom:${id}`) });
+                    });
+                  }}
+                />
+              )}
+            </View>
+          )}
+        </Sheet>
+      </FormScrollView>
+      </KeyboardScreen>
   );
 }
 

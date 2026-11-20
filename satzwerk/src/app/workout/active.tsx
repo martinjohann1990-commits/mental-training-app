@@ -1,6 +1,7 @@
+import { FormScrollView, KeyboardScreen } from '@/components/form-scroll';
 import { router, Stack } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ExerciseListEditor } from '@/components/workout/exercise-list-editor';
@@ -75,7 +76,7 @@ export default function ActiveWorkoutScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardScreen>
       <Stack.Screen
         options={{
           headerTitle: () => <ElapsedTitle startedAt={draft.startedAt} />,
@@ -96,7 +97,7 @@ export default function ActiveWorkoutScreen() {
           ),
         }}
       />
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 140 }}>
+      <FormScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 140 }}>
         <TextField value={draft.name} onChangeText={store.rename} accessibilityLabel="Name des Workouts" style={{ fontWeight: '700', fontSize: 18 }} />
         <View style={{ flexDirection: 'row', gap: spacing.lg }}>
           <AppText muted>{summary.sets} Sätze</AppText>
@@ -131,14 +132,14 @@ export default function ActiveWorkoutScreen() {
             })
           }
         />
-      </ScrollView>
+      </FormScrollView>
 
       {draft.rest && (
         <View style={[styles.restWrap, { bottom: Math.max(insets.bottom, spacing.md) }]}>
           <RestBar rest={draft.rest} onAdjust={store.adjustRest} onSkip={store.skipRest} />
         </View>
       )}
-    </KeyboardAvoidingView>
+    </KeyboardScreen>
   );
 }
 

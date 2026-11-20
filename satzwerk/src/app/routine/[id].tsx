@@ -1,7 +1,8 @@
+import { FormScrollView, KeyboardScreen } from '@/components/form-scroll';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 
 import { ExerciseListEditor } from '@/components/workout/exercise-list-editor';
 import { AppText, Button, Chip, ChipRow, EmptyState, SectionHeader, TextField } from '@/components/ui';
@@ -62,9 +63,9 @@ function RoutineForm({ routine, initialFolderId }: { routine: RoutineRow | null;
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardScreen>
       <Stack.Screen options={{ title: routine ? 'Routine' : 'Neue Routine' }} />
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 64 }}>
+      <FormScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 64 }}>
         <TextField
           label="Name"
           value={name}
@@ -129,7 +130,7 @@ function RoutineForm({ routine, initialFolderId }: { routine: RoutineRow | null;
             />
           )}
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </FormScrollView>
+    </KeyboardScreen>
   );
 }

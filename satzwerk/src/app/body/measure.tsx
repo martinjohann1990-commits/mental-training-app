@@ -1,6 +1,7 @@
+import { FormScrollView, KeyboardScreen } from '@/components/form-scroll';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { Sheet } from '@/components/sheet';
 import { AppText, Button, Card, Divider, Icon, Segmented, SectionHeader, TextField } from '@/components/ui';
@@ -75,9 +76,9 @@ function MeasureForm({
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardScreen>
       <Stack.Screen options={{ title: 'Messung' }} />
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 48 }}>
+      <FormScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 48 }}>
         <Card style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Pressable accessibilityRole="button" accessibilityLabel="Vorheriger Tag" hitSlop={10} onPress={() => shift(-1)}>
             <Icon name="chevron-left" />
@@ -139,7 +140,7 @@ function MeasureForm({
         <SectionHeader> </SectionHeader>
         <Button title={saving ? 'Speichern …' : 'Speichern'} icon="check" disabled={saving} onPress={() => void save()} />
         <Button title="Abbrechen" variant="ghost" onPress={() => router.back()} />
-      </ScrollView>
+      </FormScrollView>
 
       <Sheet visible={!!newField} onClose={() => setNewField(null)} title="Eigenes Maß">
         {newField && (
@@ -169,6 +170,6 @@ function MeasureForm({
           </View>
         )}
       </Sheet>
-    </KeyboardAvoidingView>
+    </KeyboardScreen>
   );
 }

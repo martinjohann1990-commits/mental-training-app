@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm';
 import { index, integer, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
-import type { Equipment, LoggingType, Muscle } from '@/domain/catalog';
+import type { EquipmentRef, LoggingType, Muscle } from '@/domain/catalog';
 import type { EquipmentConfig } from '@/domain/equipment';
 import type { GoalType } from '@/domain/goals';
 import type { HabitFrequency, HabitKind } from '@/domain/habits';
@@ -21,7 +21,7 @@ export const exercises = sqliteTable('exercises', {
   name: text('name').notNull(),
   primaryMuscle: text('primary_muscle').$type<Muscle>().notNull(),
   secondaryMuscles: text('secondary_muscles', { mode: 'json' }).$type<Muscle[]>().notNull(),
-  equipment: text('equipment', { mode: 'json' }).$type<Equipment[]>().notNull(),
+  equipment: text('equipment', { mode: 'json' }).$type<EquipmentRef[]>().notNull(),
   loggingType: text('logging_type').$type<LoggingType>().notNull(),
   instructions: text('instructions').notNull().default(''),
   complexParts: text('complex_parts', { mode: 'json' }).$type<string[] | null>(),
@@ -36,6 +36,15 @@ export const equipmentProfiles = sqliteTable('equipment_profiles', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   config: text('config', { mode: 'json' }).$type<EquipmentConfig>().notNull(),
+  ...timestamps,
+});
+
+/** Eigene Geräte (z. B. Sandsack, Ringe). Verfügbarkeit pro Profil über `custom:<id>`. */
+export const customEquipment = sqliteTable('custom_equipment', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  /** Optionale Gewichtsstufen in kg (für die Gewichtsauswahl). */
+  weights: text('weights', { mode: 'json' }).$type<number[]>().notNull(),
   ...timestamps,
 });
 
@@ -221,6 +230,7 @@ export const goals = sqliteTable('goals', {
   ...timestamps,
 });
 
+export type CustomEquipmentRow = typeof customEquipment.$inferSelect;
 export type HabitRow = typeof habits.$inferSelect;
 export type HabitLogRow = typeof habitLogs.$inferSelect;
 export type GoalRow = typeof goals.$inferSelect;

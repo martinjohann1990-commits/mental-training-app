@@ -3,9 +3,9 @@ import { ScrollView, View } from 'react-native';
 
 import { AppText, Button, Card, Divider, Icon, ListRow, SectionHeader } from '@/components/ui';
 import { createProfile } from '@/db/repo/equipment';
-import { EQUIPMENT } from '@/domain/catalog';
 import { parseEquipmentConfig } from '@/domain/equipment';
 import { useEquipmentProfiles } from '@/hooks/use-equipment';
+import { useEquipmentCatalog } from '@/hooks/use-equipment-catalog';
 import { useSettings } from '@/stores/settings';
 import { spacing } from '@/theme/colors';
 import { useColors } from '@/theme/use-theme';
@@ -13,6 +13,7 @@ import { useColors } from '@/theme/use-theme';
 export default function EquipmentProfilesScreen() {
   const c = useColors();
   const profiles = useEquipmentProfiles();
+  const { label: equipmentLabel } = useEquipmentCatalog();
   const { activeProfileId, setActiveProfileId } = useSettings();
 
   return (
@@ -32,7 +33,7 @@ export default function EquipmentProfilesScreen() {
               <ListRow
                 icon={isActive ? 'check-circle' : 'circle-outline'}
                 title={p.name}
-                subtitle={cfg.available.map((e) => EQUIPMENT[e]).join(', ') || 'Nur Körpergewicht'}
+                subtitle={cfg.available.filter((e) => e !== 'bodyweight').map(equipmentLabel).join(', ') || 'Nur Körpergewicht'}
                 onPress={() => router.push({ pathname: '/settings/equipment/[id]', params: { id: p.id } })}
                 right={
                   isActive ? (

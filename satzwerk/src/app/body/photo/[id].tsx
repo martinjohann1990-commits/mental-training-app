@@ -1,8 +1,9 @@
+import { FormScrollView, KeyboardScreen } from '@/components/form-scroll';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, useWindowDimensions, View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 
 import { LockGate } from '@/components/lock-gate';
 import { AppText, Button, Chip, ChipRow, EmptyState, TextField } from '@/components/ui';
@@ -35,7 +36,8 @@ function PhotoDetail() {
 
   const w = Math.min(width - 2 * spacing.lg, 520);
   return (
-    <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 48 }}>
+    <KeyboardScreen>
+      <FormScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 48 }}>
       <AppText variant="heading">{formatDay(photo.day)}</AppText>
       <Image
         source={{ uri: photoUri(photo.uri) }}
@@ -68,6 +70,7 @@ function PhotoDetail() {
           }
         />
       </View>
-    </ScrollView>
+    </FormScrollView>
+      </KeyboardScreen>
   );
 }
