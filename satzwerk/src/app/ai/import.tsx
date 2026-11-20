@@ -9,10 +9,11 @@ import { AppText, Button, Card, Chip, ChipRow, Divider, Icon, SectionHeader, Seg
 import { saveImportedPlan } from '@/db/repo/ai-import';
 import { createCustomExercise } from '@/db/repo/exercises';
 import { allFoldersQuery } from '@/db/repo/routines';
-import { matchExercise, parsePlanResponse, type ParsedExercise, type ParsedPlan, toRoutineExercise } from '@/domain/ai-plan';
+import { buildFormatFixPrompt, matchExercise, type ParseErrorCode, parsePlanResponse, type ParsedExercise, type ParsedPlan, toRoutineExercise } from '@/domain/ai-plan';
 import { useAIContext } from '@/hooks/use-ai-context';
 import { useExerciseMap } from '@/hooks/use-exercise-map';
 import { notify } from '@/lib/confirm';
+import { shareText } from '@/lib/share-text';
 import { spacing } from '@/theme/colors';
 import { useColors } from '@/theme/use-theme';
 
@@ -29,7 +30,7 @@ export default function AIImportScreen() {
   const [text, setText] = useState('');
   const [plan, setPlan] = useState<ParsedPlan | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ message: string; code: ParseErrorCode } | null>(null);
   const [planName, setPlanName] = useState('');
   const [res, setRes] = useState<Record<string, Resolution>>({});
   const [pickFor, setPickFor] = useState<string | null>(null);
@@ -46,7 +47,7 @@ export default function AIImportScreen() {
   function check() {
     const r = parsePlanResponse(text);
     if (!r.ok) {
-      setError(r.error);
+      setError({ message: r.error, code: r.code });
       setPlan(null);
       return;
     }
@@ -123,8 +124,22 @@ export default function AIImportScreen() {
               placeholder='{"plan_name": …, "routines": [ … ] }'
               style={{ minHeight: 220, fontSize: 13 }}
             />
-            {error && <AppText style={{ color: c.danger }}>{error}</AppText>}
-            <Button title="Plan prüfen" icon="magnify-scan" disabled={!text.trim()} onPress={check} />
+            {error && <AppText style={{ color: c.danger }}>{error.message}</AppText>}
+            {error && error.code !== 'no_routines' && (
+              <Card>
+                <AppText style={{ fontWeight: '700' }}>So klappt es:</AppText>
+                <AppText variant="caption" muted>
+                  1. Korrektur-Prompt teilen und in <AppText variant="caption" style={{ fontWeight: '700' }}>denselben</AppText> KI-Chat schicken.{'\n'}
+                  2. Die neue Antwort (das JSON) komplett kopieren.{'\n'}
+                  3. Das Feld oben leeren, Antwort einfügen und erneut prüfen.
+                </AppText>
+                <Button title="Korrektur-Prompt teilen" icon="share-variant" small onPress={() => void shareText(buildFormatFixPrompt(ctx.availableNames), 'Satzwerk: Plan als JSON')} />
+              </Card>
+            )}
+            <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+              <Button title="Plan prüfen" icon="magnify-scan" disabled={!text.trim()} onPress={check} style={{ flex: 1 }} />
+              {!!text && <Button title="Leeren" variant="secondary" onPress={() => { setText(''); setError(null); }} />}
+            </View>
           </>
         ) : (
           <>

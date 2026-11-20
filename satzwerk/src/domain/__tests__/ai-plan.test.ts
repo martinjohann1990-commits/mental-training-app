@@ -1,6 +1,6 @@
 import { defaultEquipmentConfig } from '@/domain/equipment';
 import {
-  buildPlanPrompt, DEFAULT_AI_PROFILE, describeEquipment, routinesToPlanJson, extractJson, matchExercise, nameSimilarity, parsePlanResponse, parseReps,
+  buildFormatFixPrompt, buildPlanPrompt, DEFAULT_AI_PROFILE, describeEquipment, routinesToPlanJson, extractJson, matchExercise, nameSimilarity, parsePlanResponse, parseReps,
   snapWeight, summarizeForRevision, toRoutineExercise,
 } from '@/domain/ai-plan';
 
@@ -149,5 +149,32 @@ describe('Equipment & Plan-JSON', () => {
       sets: [{ type: 'warmup', weight: 12, reps: 10, repsRight: null, duration: null, distance: null }, { type: 'normal', weight: 24, reps: 15, repsRight: null, duration: null, distance: null }],
     }] }], () => 'KB Swing (beidarmig)'));
     expect(json.routines[0].exercises[0]).toMatchObject({ name: 'KB Swing (beidarmig)', sets: 1, warmup_sets: 1, reps: 15, weight_kg: 24, rest_sec: 60 });
+  });
+});
+
+describe('Text statt JSON', () => {
+  const prose = `Tag 5: Functional MetCon (Zirkeltraining – 25 Minuten)
+Stelle einen Timer auf 25 Minuten und absolviere so viele saubere Runden wie möglich:
+ * 500 Meter Rudern am Ruderergometer
+ * 12 Sandbag Cleans mit dem Sandbag
+ * 10 Ab Wheel Rollouts
+Tag 3 & Tag 6: LISS / Zone-2-Ausdauer. Grundregeln: Trainiere so schwer, dass am Satzende 1 bis 2 Wiederholungen im Tank bleiben.`;
+  it('erkennt einen ausformulierten Plan', () => {
+    expect(parsePlanResponse(prose)).toMatchObject({ ok: false, code: 'prose' });
+    expect(parsePlanResponse('hallo')).toMatchObject({ ok: false, code: 'no_json' });
+    expect(parsePlanResponse('{"routines": [ { "name": } ]}')).toMatchObject({ ok: false, code: 'invalid_json' });
+    expect(parsePlanResponse('{"plan_name": "x"}')).toMatchObject({ ok: false, code: 'no_routines' });
+  });
+  it('Korrektur-Prompt enthält Schema, Übungsliste und Abschluss-Erinnerung', () => {
+    const p = buildFormatFixPrompt(['KB Swing (beidarmig)', 'Rudergerät']);
+    expect(p).toContain('ausschließlich als ein einziges JSON-Objekt');
+    expect(p).toContain('"routines"');
+    expect(p).toContain('Rudergerät');
+    expect(p.trim().endsWith('"summary" bzw. "changes".')).toBe(true);
+  });
+  it('Haupt-Prompts beginnen und enden mit der Formatanweisung', () => {
+    const p = buildPlanPrompt(DEFAULT_AI_PROFILE, '- Körpergewicht', ['A', 'B']);
+    expect(p.startsWith('WICHTIG: Deine Antwort besteht ausschließlich aus einem einzigen JSON-Objekt')).toBe(true);
+    expect(p).toMatch(/ERINNERUNG: Antworte jetzt NUR mit dem JSON-Objekt[^\n]*$/);
   });
 });

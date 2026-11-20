@@ -87,6 +87,10 @@ ${SCHEMA_EXAMPLE}
 - "interval": null oder {"mode":"emom","minutes":10,"reps_per_minute":8} | {"mode":"amrap","minutes":12} | {"mode":"tabata","work_sec":20,"rest_sec":10,"rounds":8}.
 - Genau so viele Einträge in "routines" wie Trainingstage pro Woche.`;
 
+const FORMAT_REMINDER = `
+
+ERINNERUNG: Antworte jetzt NUR mit dem JSON-Objekt (beginnt mit { und endet mit }). Keine Erklärungen davor oder danach – Erklärungen gehören in \"summary\" bzw. \"changes\".`;
+
 export function describeProfile(p: AIProfile): string {
   return [
     `- Ziel: ${AI_GOALS[p.goal]}`,
@@ -99,7 +103,9 @@ export function describeProfile(p: AIProfile): string {
 }
 
 export function buildPlanPrompt(p: AIProfile, equipmentText: string, exerciseNames: string[]): string {
-  return `Du bist ein erfahrener Kraft- und Athletiktrainer. Erstelle mir einen Trainingsplan als wiederkehrende Wochenstruktur.
+  return `WICHTIG: Deine Antwort besteht ausschließlich aus einem einzigen JSON-Objekt im unten beschriebenen Format – kein Fließtext, keine Überschriften, kein Markdown.
+
+Du bist ein erfahrener Kraft- und Athletiktrainer. Erstelle mir einen Trainingsplan als wiederkehrende Wochenstruktur.
 
 Über mich:
 ${describeProfile(p)}
@@ -110,11 +116,13 @@ ${equipmentText}
 ${RULES}
 
 Übungsliste (bevorzugt diese Namen verwenden):
-${exerciseNames.join('\n')}`;
+${exerciseNames.join('\n')}${FORMAT_REMINDER}`;
 }
 
 export function buildRevisePrompt(p: AIProfile, equipmentText: string, currentPlanJson: string, historySummary: string, exerciseNames: string[]): string {
-  return `Du bist ein erfahrener Kraft- und Athletiktrainer. Überarbeite meinen bestehenden Trainingsplan anhand meines Trainingsverlaufs.
+  return `WICHTIG: Deine Antwort besteht ausschließlich aus einem einzigen JSON-Objekt im unten beschriebenen Format – kein Fließtext, keine Überschriften, kein Markdown.
+
+Du bist ein erfahrener Kraft- und Athletiktrainer. Überarbeite meinen bestehenden Trainingsplan anhand meines Trainingsverlaufs.
 Passe Gewichte, Wiederholungen und Volumen an (Progression), erkenne Stagnation und schlage bei Bedarf einen Deload oder Übungswechsel vor.
 Behalte bewährte Übungen bei, wenn sie sich gut entwickeln. Erkläre die Änderungen im Feld "changes".
 
@@ -133,7 +141,21 @@ ${historySummary}
 ${RULES}
 
 Übungsliste (bevorzugt diese Namen verwenden):
-${exerciseNames.join('\n')}`;
+${exerciseNames.join('\n')}${FORMAT_REMINDER}`;
+}
+
+/**
+ * Kurzer Nachfass-Prompt für denselben Chat, wenn die KI Text statt JSON geliefert hat.
+ * Die Übungsliste wird mitgeschickt, damit die Namen zur Bibliothek passen.
+ */
+export function buildFormatFixPrompt(exerciseNames: string[]): string {
+  return `Danke! Bitte gib genau diesen Plan jetzt noch einmal aus – unverändert im Inhalt, aber ausschließlich als ein einziges JSON-Objekt. Kein Text davor oder danach, kein Markdown.
+Allgemeine Tipps (z. B. Ernährung, Alltagsbewegung) gehören in "summary". Ausdauereinheiten (Laufen, Rad, Rudern) als eigene Routine mit "duration_sec" bzw. "distance_m".
+
+${RULES}
+
+Übungsliste (bevorzugt diese Namen verwenden):
+${exerciseNames.join('\n')}${FORMAT_REMINDER}`;
 }
 
 // ── Antwort parsen ────────────────────────────────────────────
@@ -158,7 +180,15 @@ export type ParsedExercise = {
 export type ParsedRoutine = { name: string; notes: string; exercises: ParsedExercise[] };
 export type ParsedPlan = { name: string; summary: string; changes: string; routines: ParsedRoutine[] };
 
-export type ParseResult = { ok: true; plan: ParsedPlan; warnings: string[] } | { ok: false; error: string };
+export type ParseErrorCode = 'no_json' | 'prose' | 'invalid_json' | 'no_routines';
+export type ParseResult = { ok: true; plan: ParsedPlan; warnings: string[] } | { ok: false; error: string; code: ParseErrorCode };
+
+/** Sieht der Text wie ein ausformulierter Plan aus (statt JSON)? */
+export function looksLikeProsePlan(text: string): boolean {
+  const t = text.toLowerCase();
+  const hits = ['tag ', 'sätze', 'wiederholung', 'wdh', 'satz', 'übung', 'minuten', 'pause', 'training'].filter((w) => t.includes(w)).length;
+  return text.trim().length > 200 && hits >= 3;
+}
 
 /** Sucht das JSON-Objekt in beliebigem Text (Markdown-Codeblöcke, Text davor/danach). */
 export function extractJson(text: string): string | null {
@@ -222,7 +252,11 @@ function parseNewExercise(v: unknown): ParsedExercise['newExercise'] {
 
 export function parsePlanResponse(text: string): ParseResult {
   const json = extractJson(text);
-  if (!json) return { ok: false, error: 'Kein JSON gefunden. Füge die komplette Antwort der KI ein.' };
+  if (!json) {
+    return looksLikeProsePlan(text)
+      ? { ok: false, code: 'prose', error: 'Die KI hat den Plan als Text statt als JSON geschickt. Schick ihr den Korrektur-Prompt unten – dann liefert sie denselben Plan im richtigen Format.' }
+      : { ok: false, code: 'no_json', error: 'Kein JSON gefunden. Füge die komplette Antwort der KI ein.' };
+  }
   let raw: unknown;
   try {
     raw = JSON.parse(json);
@@ -231,13 +265,13 @@ export function parsePlanResponse(text: string): ParseResult {
     try {
       raw = JSON.parse(json.replace(/,\s*([}\]])/g, '$1'));
     } catch (e) {
-      return { ok: false, error: `Das JSON ist fehlerhaft (${e instanceof Error ? e.message : 'Syntaxfehler'}). Bitte die KI, nur gültiges JSON zu liefern.` };
+      return { ok: false, code: 'invalid_json', error: `Das JSON ist fehlerhaft (${e instanceof Error ? e.message : 'Syntaxfehler'}). Bitte die KI, nur gültiges JSON zu liefern.` };
     }
   }
   const o = (raw ?? {}) as Record<string, unknown>;
   const warnings: string[] = [];
   const routinesRaw = Array.isArray(o.routines) ? o.routines : Array.isArray(o.days) ? o.days : null;
-  if (!routinesRaw || routinesRaw.length === 0) return { ok: false, error: 'Im JSON fehlt die Liste "routines".' };
+  if (!routinesRaw || routinesRaw.length === 0) return { ok: false, code: 'no_routines', error: 'Im JSON fehlt die Liste "routines".' };
 
   const routines: ParsedRoutine[] = [];
   routinesRaw.forEach((r, ri) => {
