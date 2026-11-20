@@ -3,6 +3,8 @@ import { index, integer, real, sqliteTable, text, uniqueIndex } from 'drizzle-or
 
 import type { Equipment, LoggingType, Muscle } from '@/domain/catalog';
 import type { EquipmentConfig } from '@/domain/equipment';
+import type { GoalType } from '@/domain/goals';
+import type { HabitFrequency, HabitKind } from '@/domain/habits';
 import type { IntervalConfig, SetType, SetValues } from '@/domain/workout';
 
 const timestamps = {
@@ -170,6 +172,58 @@ export const progressPhotos = sqliteTable(
   (t) => [index('photos_day_idx').on(t.day)],
 );
 
+export const habits = sqliteTable('habits', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  kind: text('kind').$type<HabitKind>().notNull(),
+  dailyTarget: real('daily_target'),
+  unit: text('unit').notNull().default(''),
+  frequency: text('frequency').$type<HabitFrequency>().notNull(),
+  timesPerWeek: integer('times_per_week'),
+  /** 'HH:MM' oder null. */
+  reminderTime: text('reminder_time'),
+  reminderNotificationId: text('reminder_notification_id'),
+  archived: integer('archived', { mode: 'boolean' }).notNull().default(false),
+  sort: integer('sort').notNull().default(0),
+  ...timestamps,
+});
+
+export const habitLogs = sqliteTable(
+  'habit_logs',
+  {
+    id: text('id').primaryKey(),
+    habitId: text('habit_id')
+      .notNull()
+      .references(() => habits.id, { onDelete: 'cascade' }),
+    day: text('day').notNull(),
+    value: real('value').notNull(),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex('habit_logs_habit_day_idx').on(t.habitId, t.day)],
+);
+
+export const goals = sqliteTable('goals', {
+  id: text('id').primaryKey(),
+  type: text('type').$type<GoalType>().notNull(),
+  title: text('title').notNull(),
+  /** strength: Übung; measurement: Feld-Key; habit: Gewohnheits-ID. */
+  refId: text('ref_id'),
+  /** strength: 'e1rm' | 'weight'. */
+  metric: text('metric'),
+  /** strength/weight: Gewicht muss mit mind. so vielen Wdh. geschafft werden. */
+  targetReps: integer('target_reps'),
+  startValue: real('start_value').notNull(),
+  targetValue: real('target_value').notNull(),
+  /** 'YYYY-MM-DD' oder null. */
+  deadline: text('deadline'),
+  achievedAt: integer('achieved_at', { mode: 'timestamp_ms' }),
+  archived: integer('archived', { mode: 'boolean' }).notNull().default(false),
+  ...timestamps,
+});
+
+export type HabitRow = typeof habits.$inferSelect;
+export type HabitLogRow = typeof habitLogs.$inferSelect;
+export type GoalRow = typeof goals.$inferSelect;
 export type MeasurementRow = typeof measurements.$inferSelect;
 export type MeasurementFieldRow = typeof measurementFields.$inferSelect;
 export type ProgressPhotoRow = typeof progressPhotos.$inferSelect;

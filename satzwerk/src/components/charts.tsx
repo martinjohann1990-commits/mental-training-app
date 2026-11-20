@@ -75,16 +75,19 @@ export function LineChart({
   formatX,
   height = 180,
   accessibilityLabel,
+  target,
 }: {
   points: Point[];
   formatY: (v: number) => string;
   formatX: (v: number) => string;
   height?: number;
   accessibilityLabel: string;
+  /** Optionale Ziellinie (gestrichelt). */
+  target?: number;
 }) {
   const c = useColors();
   const [width, onLayout] = useWidth();
-  const ys = points.map((p) => p.y);
+  const ys = [...points.map((p) => p.y), ...(target !== undefined ? [target] : [])];
   const ticks = niceTicks(Math.min(...ys), Math.max(...ys));
   const yMin = ticks[0];
   const yMax = ticks[ticks.length - 1];
@@ -122,6 +125,14 @@ export function LineChart({
               <SvgText x={width - PAD.right} y={height - 6} fontSize={11} fontFamily="sans-serif" fill={c.textMuted} textAnchor="end">
                 {formatX(xMax)}
               </SvgText>
+            )}
+            {target !== undefined && (
+              <>
+                <Line x1={PAD.left} x2={width - PAD.right} y1={sy(target)} y2={sy(target)} stroke={c.success} strokeWidth={1.5} strokeDasharray="6,4" />
+                <SvgText x={width - PAD.right} y={sy(target) - 4} fontSize={11} fontFamily="sans-serif" fill={c.textMuted} textAnchor="end">
+                  Ziel
+                </SvgText>
+              </>
             )}
             {points.length > 1 && <Path d={d} stroke={c.accent} strokeWidth={2} fill="none" strokeLinejoin="round" strokeLinecap="round" />}
             {points.length <= 24 &&

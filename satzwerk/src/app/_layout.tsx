@@ -114,6 +114,12 @@ export default function RootLayout() {
           <Stack.Screen name="body/photos" options={{ title: 'Fototagebuch' }} />
           <Stack.Screen name="body/photo/[id]" options={{ title: 'Foto' }} />
           <Stack.Screen name="body/compare" options={{ title: 'Vorher / Nachher' }} />
+          <Stack.Screen name="habits/index" options={{ title: 'Gewohnheiten' }} />
+          <Stack.Screen name="habits/edit" options={{ title: 'Gewohnheit', presentation: 'modal' }} />
+          <Stack.Screen name="habits/[id]" options={{ title: 'Gewohnheit' }} />
+          <Stack.Screen name="goals/index" options={{ title: 'Ziele' }} />
+          <Stack.Screen name="goals/edit" options={{ title: 'Ziel', presentation: 'modal' }} />
+          <Stack.Screen name="goals/[id]" options={{ title: 'Ziel' }} />
         </Stack>
         <AppLockOverlay />
       </ThemeProvider>

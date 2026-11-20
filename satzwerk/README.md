@@ -34,6 +34,11 @@ Workout-Tracker für Android (Expo / React Native). Spezifikation: [`../SPEC.md`
 - App-Sperre (Fingerabdruck/Gesicht/PIN): Aus, nur Fototagebuch (Standard) oder ganze App; sperrt wieder nach Hintergrund
 - Eigenes Foto/Video pro Übung (Video öffnet im System-Player)
 
+## Stand: Phase 5 ✅
+- Ziele: Kraft (Gewicht × mind. X Wdh. oder 1RM), Körpergewicht, Körpermaß, Serie einer Gewohnheit; Start = aktueller Stand, optionale Deadline, Fortschrittsbalken, Prognose per Trendlinie, nötiges Tempo pro Woche, Chart mit Ziellinie, automatische „Erreicht“-Markierung
+- Gewohnheiten: Ja/Nein, Zahl mit Tagesziel, Trainingsfrequenz (automatisch aus Workouts); täglich oder x-mal pro Woche; Serien, Erfüllungsquote, Heatmap (Nachtragen per Antippen), tägliche Erinnerung
+- Training-Tab: „Heute“ zum schnellen Abhaken + aktive Ziele
+
 ## APK / Updates
 - APK-Builds über EAS (`eas.json`, Profil `preview`), Projekt: https://expo.dev/accounts/martinjo90/projects/satzwerk
 - Updates ohne Neuinstallation über EAS Update (Kanal `preview`), solange keine neuen nativen Module dazukommen

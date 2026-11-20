@@ -82,3 +82,38 @@ export function buzz(kind: 'end' | 'tick' | 'phase' = 'end'): void {
   void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   Vibration.vibrate(kind === 'end' ? [0, 400, 200, 400] : [0, 250]);
 }
+
+const HABIT_CHANNEL_ID = 'habit-reminders';
+let habitChannelReady = false;
+
+/** Tägliche Erinnerung für eine Gewohnheit. Liefert die Notification-ID (oder null). */
+export async function scheduleDailyReminder(title: string, body: string, time: string): Promise<string | null> {
+  if (Platform.OS === 'web') return null;
+  const m = /^(\d{1,2}):(\d{2})$/.exec(time);
+  if (!m) return null;
+  try {
+    await initRestAlerts();
+    if (!(await ensurePermission())) return null;
+    if (Platform.OS === 'android' && !habitChannelReady) {
+      await Notifications.setNotificationChannelAsync(HABIT_CHANNEL_ID, {
+        name: 'Gewohnheiten',
+        // eslint-disable-next-line import/namespace
+        importance: Notifications.AndroidImportance.DEFAULT,
+      });
+      habitChannelReady = true;
+    }
+    return await Notifications.scheduleNotificationAsync({
+      content: { title, body },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour: Number(m[1]),
+        minute: Number(m[2]),
+        channelId: HABIT_CHANNEL_ID,
+      },
+    });
+  } catch {
+    return null;
+  }
+}
+
+export const cancelReminder = cancelRestEnd;

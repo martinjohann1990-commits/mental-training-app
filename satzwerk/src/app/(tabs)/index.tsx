@@ -20,7 +20,11 @@ import { recentWorkoutsQuery } from '@/db/repo/workouts';
 import type { RoutineRow } from '@/db/schema';
 import { routineToDraftExercises } from '@/domain/routine';
 import { formatDuration, formatWeight } from '@/domain/units';
+import { GoalCard, HabitTodayRow } from '@/components/habits-goals';
+import { useBodyData } from '@/hooks/use-body';
 import { useExerciseMap } from '@/hooks/use-exercise-map';
+import { useGoals } from '@/hooks/use-goals';
+import { useHabits } from '@/hooks/use-habits';
 import { confirmAction } from '@/lib/confirm';
 import { startWorkoutFrom } from '@/lib/start-workout';
 import { useActiveWorkout } from '@/stores/active-workout';
@@ -69,6 +73,10 @@ export default function TrainingScreen() {
   const [folderMenu, setFolderMenu] = useState<{ id: string; name: string } | null>(null);
   const [folderName, setFolderName] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const { habits, today } = useHabits();
+  const { goals } = useGoals();
+  const { fields } = useBodyData();
+  const openGoals = goals.filter((g) => !g.evaluation.reached).slice(0, 3);
 
   const groups: { id: string | null; name: string; items: RoutineRow[] }[] = [
     ...folders.map((f) => ({ id: f.id as string | null, name: f.name, items: routines.filter((r) => r.folderId === f.id) })),
@@ -91,6 +99,35 @@ export default function TrainingScreen() {
 
       <ActiveBanner />
       {!draft && <Button title="Leeres Workout starten" icon="play" onPress={() => startWorkoutFrom(greetingName(), [])} />}
+
+      {habits.length > 0 && (
+        <>
+          <SectionHeader action={<Button title="Alle" variant="ghost" small onPress={() => router.push('/habits')} />}>Heute</SectionHeader>
+          <Card style={{ paddingVertical: 0 }}>
+            {habits.map((h, i) => (
+              <View key={h.id}>
+                {i > 0 && <Divider />}
+                <HabitTodayRow h={h} day={today} />
+              </View>
+            ))}
+          </Card>
+        </>
+      )}
+
+      {openGoals.length > 0 && (
+        <>
+          <SectionHeader action={<Button title="Alle" variant="ghost" small onPress={() => router.push('/goals')} />}>Ziele</SectionHeader>
+          {openGoals.map((g) => (
+            <GoalCard
+              key={g.id}
+              g={g}
+              unit={unit}
+              measureUnit={fields.find((f) => f.key === g.refId)?.unit}
+              habitUnit={habits.find((h) => h.id === g.refId)?.streak.unit}
+            />
+          ))}
+        </>
+      )}
 
       <SectionHeader
         action={

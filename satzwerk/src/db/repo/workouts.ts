@@ -205,3 +205,6 @@ export async function previousSetsFor(exerciseIds: string[], excludeWorkoutId?: 
   }
   return result;
 }
+
+/** Nur die Startzeiten aller Workouts (leichtgewichtig, z. B. für Trainingsfrequenz-Gewohnheiten). */
+export const workoutStartsQuery = () => db.select({ startedAt: workouts.startedAt }).from(workouts);

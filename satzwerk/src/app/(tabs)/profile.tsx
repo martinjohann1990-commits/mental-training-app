@@ -18,6 +18,12 @@ export default function ProfileScreen() {
           onPress={() => router.push('/settings/equipment')}
         />
       </Card>
+      <SectionHeader>Ziele & Gewohnheiten</SectionHeader>
+      <Card style={{ paddingVertical: spacing.xs }}>
+        <ListRow icon="flag-checkered" title="Ziele" subtitle="Kraft, Körpergewicht, Maße, Serien" onPress={() => router.push('/goals')} />
+        <Divider />
+        <ListRow icon="checkbox-marked-circle-outline" title="Gewohnheiten" subtitle="Streaks, Heatmap, Erinnerungen" onPress={() => router.push('/habits')} />
+      </Card>
       <SectionHeader>App</SectionHeader>
       <Card style={{ paddingVertical: spacing.xs }}>
         <ListRow icon="cog-outline" title="Einstellungen" subtitle="Einheiten, Darstellung, App-Sperre" onPress={() => router.push('/settings')} />
