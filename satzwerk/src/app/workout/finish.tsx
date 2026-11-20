@@ -116,7 +116,7 @@ export default function FinishWorkoutScreen() {
             setSaving(true);
             const id = await saveWorkout(draft, { name, notes, rating, energy }, endedAt);
             discard();
-            router.dismissAll();
+            if (router.canDismiss()) router.dismissAll();
             router.replace({ pathname: '/workout/[id]', params: { id, fresh: '1' } });
           }}
         />

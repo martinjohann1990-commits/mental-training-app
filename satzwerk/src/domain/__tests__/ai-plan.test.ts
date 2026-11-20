@@ -1,6 +1,6 @@
 import { defaultEquipmentConfig } from '@/domain/equipment';
 import {
-  buildFormatFixPrompt, buildPlanPrompt, DEFAULT_AI_PROFILE, describeEquipment, routinesToPlanJson, extractJson, matchExercise, nameSimilarity, parsePlanResponse, parseReps,
+  buildFormatFixPrompt, buildPlanPrompt, DEFAULT_AI_PROFILE, describeEquipment, parseAmount, routinesToPlanJson, stripCitationArtifacts, extractJson, matchExercise, nameSimilarity, parsePlanResponse, parseReps,
   snapWeight, summarizeForRevision, toRoutineExercise,
 } from '@/domain/ai-plan';
 
@@ -50,7 +50,7 @@ describe('KI-Antwort parsen', () => {
   });
   it('klare Fehlermeldungen', () => {
     expect(parsePlanResponse('keine Ahnung')).toMatchObject({ ok: false });
-    expect(parsePlanResponse('{"plan_name": "x"}')).toMatchObject({ ok: false, error: expect.stringContaining('routines') });
+    expect(parsePlanResponse('{"plan_name": "x"}')).toMatchObject({ ok: false, code: 'no_routines' });
     expect(parsePlanResponse('{"routines": [ {')).toMatchObject({ ok: false });
   });
   it('parseReps', () => {
@@ -176,5 +176,74 @@ Tag 3 & Tag 6: LISS / Zone-2-Ausdauer. Grundregeln: Trainiere so schwer, dass am
     const p = buildPlanPrompt(DEFAULT_AI_PROFILE, '- Körpergewicht', ['A', 'B']);
     expect(p.startsWith('WICHTIG: Deine Antwort besteht ausschließlich aus einem einzigen JSON-Objekt')).toBe(true);
     expect(p).toMatch(/ERINNERUNG: Antworte jetzt NUR mit dem JSON-Objekt[^\n]*$/);
+  });
+});
+
+describe('Fremdes JSON-Format (z. B. Gemini)', () => {
+  const foreign = `Hier ist dein Plan als JSON:
+\`\`\`json
+{
+  "plan": "Fettabbau Hybrid",
+  "weekly_schedule": {
+    "day_1": {
+      "title": "Unterkörper Kraft",
+      "exercises": [
+        { "order": "1", "name": "KB Goblet Squat", "equipment": "Kettlebell", "sätze": 4, "wiederholungen": "8-10", "pause": "90 Sek" },
+        { "order": "2", "name": "Rumänisches Kreuzheben (Kurzhanteln)", "volume": "3x12" }
+      ]
+    },
+    "day_3": { "title": "LISS", "activity": "Laufen", "duration": "30-45 Min", "description": "Sprechtempo" },
+    "day_5": {
+      "title": "Functional MetCon",
+      "format": "Zirkel – AMRAP 25 Minuten",
+      "exercises": [
+        { "order": "1", "name": "Rudergerät", "equipment": "Rudergerät", "volume": "500 Meter" },
+        { "order": "2", "name": "Sandbag Cleans / Bear Hug Squats", "equipment": "Sandbag", "volume": "12 Wdh." },
+        { "order": "3", "name": "Sandbag Bear Hug Carry / Farmer's Walk", "volume": "30 Meter" },
+        { "order": "4", "name": "Ab Wheel Rollouts", "volume": "10 Wdh." }
+      ]
+    }
+  },
+  "fat_loss_guidelines": [
+    "Intensität vor Volumen.",
+    "Moderates Kaloriendefizit, viel Protein."
+  ]
+}
+\`\`\`[span_0](start_span)[span_0](end_span)`;
+
+  it('findet Trainingstage, übersetzt Mengen und Zirkel', () => {
+    const r = parsePlanResponse(foreign);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.plan.name).toBe('Fettabbau Hybrid');
+    expect(r.plan.routines.map((x) => x.name)).toEqual(['Unterkörper Kraft', 'LISS', 'Functional MetCon']);
+    expect(r.warnings[0]).toContain('eigenes Format');
+    const [goblet, rdl] = r.plan.routines[0].exercises;
+    expect(goblet).toMatchObject({ name: 'KB Goblet Squat', sets: 4, repsMin: 8, repsMax: 10, restSec: 90, supersetGroup: null });
+    expect(rdl).toMatchObject({ sets: 3, repsMin: 12 });
+    expect(r.plan.routines[1].exercises[0]).toMatchObject({ name: 'Laufen', durationSec: 1800 });
+    const metcon = r.plan.routines[2].exercises;
+    expect(metcon.every((e) => e.supersetGroup === 1 && e.sets === 1)).toBe(true);
+    expect(metcon[0]).toMatchObject({ name: 'Rudergerät', distanceM: 500, interval: { mode: 'amrap', minutes: 25 } });
+    expect(metcon[1]).toMatchObject({ repsMin: 12 });
+    expect(metcon[2]).toMatchObject({ distanceM: 30 });
+    expect(r.plan.routines[2].notes).toContain('AMRAP 25 Minuten');
+    expect(r.plan.summary).toContain('Kaloriendefizit');
+  });
+
+  it('parseAmount', () => {
+    expect(parseAmount('3x10')).toEqual({ sets: 3, reps: '10' });
+    expect(parseAmount('4 × 8-12')).toEqual({ sets: 4, reps: '8-12' });
+    expect(parseAmount('45 Sek')).toEqual({ duration_sec: 45 });
+    expect(parseAmount('1,5 km')).toEqual({ distance_m: 1500 });
+    expect(parseAmount('12 Wdh.')).toEqual({ reps: '12' });
+  });
+
+  it('Artefakte werden entfernt', () => {
+    expect(stripCitationArtifacts('a[span_3](start_span)b [cite: 4]c')).toBe('ab c');
+  });
+
+  it('JSON ohne erkennbare Übungen bleibt ein klarer Fehler', () => {
+    expect(parsePlanResponse('{"tipps": ["viel trinken"]}')).toMatchObject({ ok: false, code: 'no_routines' });
   });
 });

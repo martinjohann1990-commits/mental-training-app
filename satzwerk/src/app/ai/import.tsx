@@ -97,7 +97,7 @@ export default function AIImportScreen() {
         folderId: reviseFolder,
       });
       notify('Plan gespeichert', `${routines.length} Routinen liegen jetzt im Training-Tab.`);
-      router.dismissAll();
+      if (router.canDismiss()) router.dismissAll();
       router.replace('/');
     } finally {
       setSaving(false);

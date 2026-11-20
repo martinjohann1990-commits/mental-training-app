@@ -250,8 +250,144 @@ function parseNewExercise(v: unknown): ParsedExercise['newExercise'] {
   };
 }
 
+// ── Fremde JSON-Formate tolerant übersetzen ───────────────────
+
+type Obj = Record<string, unknown>;
+const isObj = (v: unknown): v is Obj => !!v && typeof v === 'object' && !Array.isArray(v);
+
+/** Entfernt Quellen-Artefakte mancher KIs (z. B. „[span_0](start_span)“, „[cite: 3]“). */
+export function stripCitationArtifacts(text: string): string {
+  return text.replace(/\[span_\d+\]\((?:start|end)_span\)/g, '').replace(/\[cite(?::[^\]]*)?\]/gi, '');
+}
+
+const NAME_KEYS = ['name', 'exercise', 'übung', 'uebung', 'title', 'bezeichnung'];
+const LIST_KEYS = /exerc|übung|uebung|workout|circuit|zirkel|block|items|movements|bewegung/i;
+
+function pick(o: Obj, keys: string[]): unknown {
+  for (const k of Object.keys(o)) if (keys.includes(k.toLowerCase())) return o[k];
+  return undefined;
+}
+function pickRe(o: Obj, re: RegExp): unknown {
+  for (const k of Object.keys(o)) if (re.test(k)) return o[k];
+  return undefined;
+}
+const isExerciseObj = (v: unknown) => isObj(v) && typeof pick(v, NAME_KEYS) === 'string';
+
+/** „3x10“, „12 Wdh.“, „30 Meter“, „45 Sek“, „25 Minuten“, „8-10“ → Felder im Satzwerk-Schema. */
+export function parseAmount(text: string): { sets?: number; reps?: string; distance_m?: number; duration_sec?: number } {
+  const t = text.toLowerCase();
+  const out: { sets?: number; reps?: string; distance_m?: number; duration_sec?: number } = {};
+  const sx = /(\d+)\s*[x×]\s*(\d+(?:\s*[-–]\s*\d+)?)/.exec(t);
+  if (sx) {
+    out.sets = Number(sx[1]);
+    out.reps = sx[2].replace(/\s/g, '');
+    return out;
+  }
+  const dist = /(\d+(?:[.,]\d+)?)\s*(km|m|meter)\b/.exec(t);
+  if (dist) out.distance_m = Number(dist[1].replace(',', '.')) * (dist[2] === 'km' ? 1000 : 1);
+  const sec = /(\d+)\s*(s|sek|sec|sekunden|seconds)\b/.exec(t);
+  const min = /(\d+)(?:\s*[-–]\s*\d+)?\s*(min|minuten|minutes)\b/.exec(t);
+  if (sec) out.duration_sec = Number(sec[1]);
+  else if (min) out.duration_sec = Number(min[1]) * 60;
+  if (!dist && !sec && !min) {
+    const range = /(\d+)\s*[-–]\s*(\d+)/.exec(t);
+    const one = /(\d+)/.exec(t);
+    if (range) out.reps = `${range[1]}-${range[2]}`;
+    else if (one) out.reps = one[1];
+  }
+  return out;
+}
+
+/** Übung in fremdem Format → Satzwerk-Schema. */
+function looseExercise(e: unknown, circuit: boolean): Obj | null {
+  if (typeof e === 'string') {
+    const m = /^\s*(\d+(?:\s*[x×]\s*\d+)?(?:\s*(?:wdh\.?|reps|meter|m|sek\.?|min\.?))?)\s+(.+)$/i.exec(e);
+    const name = (m ? m[2] : e).replace(/\s*\(.*?\)\s*$/, '').trim();
+    if (!name) return null;
+    return { name, ...(m ? parseAmount(m[1]) : {}), ...(circuit ? { superset_group: 1, sets: 1 } : {}) };
+  }
+  if (!isObj(e)) return null;
+  const name = str(pick(e, NAME_KEYS));
+  if (!name) return null;
+  const sets = num(pick(e, ['sets', 'sätze', 'saetze', 'satz', 'runden', 'rounds']));
+  const repsRaw = pick(e, ['reps', 'wdh', 'wiederholungen', 'repetitions']);
+  const amountRaw = pickRe(e, /volume|menge|umfang|dosierung|amount|prescription|vorgabe/i);
+  const amount = typeof amountRaw === 'string' ? parseAmount(amountRaw) : typeof repsRaw === 'string' ? parseAmount(repsRaw) : {};
+  const restRaw = pick(e, ['rest', 'rest_sec', 'pause', 'pausen', 'pause_sec']);
+  const rest = typeof restRaw === 'string' ? parseAmount(restRaw).duration_sec ?? num(restRaw) : num(restRaw);
+  const durRaw = pick(e, ['duration', 'dauer', 'duration_sec', 'zeit', 'time']);
+  const notes = [str(pick(e, ['notes', 'note', 'hinweis', 'hinweise', 'tipp', 'description', 'beschreibung', 'cue'])), typeof amountRaw === 'string' && !amount.reps ? amountRaw : '']
+    .filter(Boolean)
+    .join(' · ');
+  return {
+    name,
+    sets: sets ?? amount.sets ?? (circuit ? 1 : undefined),
+    reps: typeof repsRaw === 'number' ? repsRaw : (amount.reps ?? (typeof repsRaw === 'string' ? repsRaw : null)),
+    weight_kg: pick(e, ['weight_kg', 'weight', 'gewicht', 'gewicht_kg', 'load']),
+    duration_sec: amount.duration_sec ?? (typeof durRaw === 'string' ? parseAmount(durRaw).duration_sec : num(durRaw)),
+    distance_m: amount.distance_m ?? null,
+    rest_sec: rest ?? undefined,
+    notes,
+    superset_group: circuit ? 1 : (pick(e, ['superset_group', 'superset']) ?? null),
+  };
+}
+
+/** Sucht Trainingstage samt Übungslisten irgendwo im JSON (fremde Strukturen). */
+export function findLooseRoutines(raw: unknown): { routines: Obj[]; summary: string[] } {
+  const routines: Obj[] = [];
+  const summary: string[] = [];
+  const titleOf = (o: Obj, key: string) => {
+    const parts = [str(pick(o, ['day', 'tag'])), str(pick(o, ['name', 'title', 'titel', 'focus', 'fokus']))].filter(Boolean);
+    const fallback = key.replace(/[_-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).trim();
+    return parts.join(': ') || fallback || `Tag ${routines.length + 1}`;
+  };
+  const walk = (node: unknown, key: string, depth: number) => {
+    if (depth > 6 || node === null || node === undefined) return;
+    if (Array.isArray(node)) {
+      if (node.every((x) => typeof x === 'string') && /guideline|tipp|regel|rule|hinweis|note|ernährung|nutrition/i.test(key)) {
+        summary.push(...(node as string[]));
+        return;
+      }
+      node.forEach((n, i) => walk(n, `${key} ${i + 1}`, depth + 1));
+      return;
+    }
+    if (!isObj(node)) return;
+    // Ist dieses Objekt ein Trainingstag? → hat eine Liste mit Übungen
+    for (const [k, v] of Object.entries(node)) {
+      if (!Array.isArray(v) || v.length === 0) continue;
+      const exerciseList = v.every(isExerciseObj) || (LIST_KEYS.test(k) && v.every((x) => typeof x === 'string' || isExerciseObj(x)));
+      if (!exerciseList) continue;
+      const formatText = [str(pick(node, ['format', 'type', 'typ', 'art', 'structure', 'struktur', 'protocol'])), str(pick(node, ['description', 'beschreibung', 'notes', 'hinweis']))]
+        .filter(Boolean)
+        .join(' · ');
+      const circuit = /zirkel|circuit|amrap|emom|runden|rounds|metcon/i.test(`${formatText} ${titleOf(node, key)} ${k}`);
+      const exercises = v.map((x) => looseExercise(x, circuit)).filter((x): x is Obj => !!x);
+      if (exercises.length) {
+        const amrap = /amrap|so viele runden/i.test(formatText) ? /(\d+)\s*min/i.exec(formatText) : null;
+        routines.push({
+          name: titleOf(node, key),
+          notes: formatText,
+          exercises: amrap ? exercises.map((x, i) => (i === 0 ? { ...x, interval: { mode: 'amrap', minutes: Number(amrap[1]) } } : x)) : exercises,
+        });
+        return;
+      }
+    }
+    // Ausdauertag ohne Übungsliste (z. B. „activity“: „Laufen“, „duration“: „30-45 Min“)
+    const activity = str(pickRe(node, /^(activity|aktivität|aktivitaet|sport|einheit|cardio)$/i));
+    const dur = pickRe(node, /^(duration|dauer|zeit)$/i);
+    if (activity && depth > 0) {
+      const d = typeof dur === 'string' ? parseAmount(dur).duration_sec : num(dur);
+      routines.push({ name: titleOf(node, key), notes: str(pick(node, ['description', 'beschreibung', 'notes', 'hinweis'])), exercises: [{ name: activity, sets: 1, reps: null, duration_sec: d ?? null, rest_sec: 0 }] });
+      return;
+    }
+    for (const [k, v] of Object.entries(node)) walk(v, k, depth + 1);
+  };
+  walk(raw, '', 0);
+  return { routines, summary };
+}
+
 export function parsePlanResponse(text: string): ParseResult {
-  const json = extractJson(text);
+  const json = extractJson(stripCitationArtifacts(text));
   if (!json) {
     return looksLikeProsePlan(text)
       ? { ok: false, code: 'prose', error: 'Die KI hat den Plan als Text statt als JSON geschickt. Schick ihr den Korrektur-Prompt unten – dann liefert sie denselben Plan im richtigen Format.' }
@@ -270,8 +406,20 @@ export function parsePlanResponse(text: string): ParseResult {
   }
   const o = (raw ?? {}) as Record<string, unknown>;
   const warnings: string[] = [];
-  const routinesRaw = Array.isArray(o.routines) ? o.routines : Array.isArray(o.days) ? o.days : null;
-  if (!routinesRaw || routinesRaw.length === 0) return { ok: false, code: 'no_routines', error: 'Im JSON fehlt die Liste "routines".' };
+  let routinesRaw: unknown[] | null = Array.isArray(o.routines) && o.routines.length ? o.routines : null;
+  let looseSummary: string[] = [];
+  if (!routinesRaw) {
+    // Fremdes Format: Trainingstage selbst suchen.
+    const loose = findLooseRoutines(raw);
+    if (loose.routines.length) {
+      routinesRaw = loose.routines;
+      looseSummary = loose.summary;
+      warnings.push('Die KI hat ein eigenes Format verwendet – Satzwerk hat es übersetzt. Bitte Übungen und Vorgaben prüfen.');
+    }
+  }
+  if (!routinesRaw || routinesRaw.length === 0) {
+    return { ok: false, code: 'no_routines', error: 'Im JSON wurden keine Trainingstage mit Übungen gefunden.' };
+  }
 
   const routines: ParsedRoutine[] = [];
   routinesRaw.forEach((r, ri) => {
@@ -322,7 +470,12 @@ export function parsePlanResponse(text: string): ParseResult {
 
   return {
     ok: true,
-    plan: { name: str(o.plan_name) || 'KI-Plan', summary: str(o.summary), changes: str(o.changes), routines },
+    plan: {
+      name: str(o.plan_name) || str(pick(o, ['name', 'title', 'titel', 'plan', 'planname'])) || 'KI-Plan',
+      summary: [str(o.summary), ...looseSummary].filter(Boolean).join('\n'),
+      changes: str(o.changes),
+      routines,
+    },
     warnings,
   };
 }
